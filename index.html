@@ -204,6 +204,7 @@ details.tip div{margin-top:4px;padding:6px 10px;border-left:3px solid var(--jade
     <button class="btn small" data-act="scrolls">功法</button>
     <button class="btn small ghost" data-act="help">玩法</button>
     <button class="btn small ghost" data-act="world">換世界</button>
+    <button class="btn small" data-act="savep">存檔</button>
   </nav>
 </header>
 <main>
@@ -934,7 +935,7 @@ function breakthrough(i){
   document.getElementById('burstSmall').textContent=TX('取回「'+n.name+'玉簡」，習得'+n.scroll.title+(NODES[i+1]&&NODES[i+1].impl?'，前往「'+NODES[i+1].name+'」吧。':'。'));
   document.getElementById('burst').classList.add('show');
 }
-document.getElementById('burstOk').onclick=()=>{document.getElementById('burst').classList.remove('show');updateHud();};
+document.getElementById('burstOk').onclick=()=>{document.getElementById('burst').classList.remove('show');updateHud();setTimeout(()=>toast('別忘了按上方的「存檔」下載存檔檔案，電腦教室關機會還原。'),600);};
 
 pn.addEventListener('submit',e=>{
   e.preventDefault();const f=e.target,fd=new FormData(f),kind=f.dataset.form;
@@ -963,6 +964,10 @@ pn.addEventListener('click',e=>{
   if(a==='close'){closePanel();return;}
   if(a==='reset2'){S=fresh();save();closePanel();if(window.Map3D)Map3D.reset();mapRefresh();askName();return;}
   if(a==='world'){const w=b.dataset.world;if(w===THEME_ID){toast('你已經在這個世界了。');return;}S.theme=w;save();location.reload();return;}
+  if(a==='savep2'){showSave();return;}
+  if(a==='dlsave'){downloadSave();return;}
+  if(a==='cpsave'){copySave(b);return;}
+  if(a==='ldsave'){loadSaveFromText(pn.querySelector('#saveText').value);return;}
   if(a==='reset1'){b.outerHTML='<span class="sub">確定要清除全部進度嗎？</span> <button class="btn small" data-act="reset2">確定清除</button>';return;}
   if(!cur)return;const n=NODES[cur.i];
   if(a==='dlgNext'){if(cur.dlg<n.lines.length-1)cur.dlg++;else{S.seen[n.id]=true;save();cur.view='board';}renderRegion();}
@@ -976,7 +981,7 @@ pn.addEventListener('click',e=>{
   else if(a==='board'){cur.view='board';cur.trial=null;renderRegion();}
 });
 document.querySelector('nav').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;
-  ({char:showChar,scrolls:showScrolls,help:showHelp,world:showWorlds})[b.dataset.act]();});
+  ({char:showChar,scrolls:showScrolls,help:showHelp,world:showWorlds,savep:showSave})[b.dataset.act]();});
 
 function showChar(){
   const s=stageInfo(),max=Math.max(6,...STATS.map(k=>S.stats[k]||0));cur=null;
@@ -986,7 +991,7 @@ function showChar(){
   h+=`<p class="sub">道基對應貓咪盃「國中生活 AI 互動組」的評分項目，滑鼠移到長條上可看對應項目。</p>`;
   h+=`<h3>稱號</h3><div class="chips">${S.titles.length?S.titles.map(t=>`<span class="chip">${t}</span>`).join(''):'<span class="sub">尚無稱號</span>'}</div>`;
   h+=`<h3>已取回的玉簡</h3><div class="chips">${S.cleared.length?S.cleared.map(i=>`<span class="chip">${NODES[i].name}玉簡</span>`).join(''):'<span class="sub">尚未取回</span>'}</div>`;
-  h+=`<h3>存檔</h3><p class="sub">進度只存在這個瀏覽器裡，換電腦或清除瀏覽資料就會不見。</p><button class="btn ghost small" data-act="reset1">重新開始</button>`;
+  h+=`<h3>存檔</h3><p class="sub">進度只存在這個瀏覽器裡。電腦教室關機會還原，下課前請按上方的「存檔」下載存檔檔案。</p><div class="row"><button class="btn small" data-act="savep2">存檔與讀檔</button><button class="btn ghost small" data-act="reset1">重新開始</button></div>`;
   showPanel(h);
 }
 function showScrolls(){cur=null;
@@ -1023,7 +1028,8 @@ function askName(){cur=null;
   showPanel(`<h2>拜入算衍宗</h2><p class="sub">修仙界的大道叫「算道」：萬物運行皆有定數，能推演定數者方能飛升。你將以 Scratch 為推演法器，下山歷練、斬除心魔，從凡人一路修到渡劫。</p>
   <h3>選擇你的世界</h3>${worldCards()}<p class="sub">題目和積木都一樣，只有故事和畫面不同；之後隨時可以按上方的「換世界」切換，進度不會消失。</p>
   <form data-form="name"><div class="field"><label>你的道號（名字或暱稱）</label><input type="text" name="name" maxlength="20" required autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"></div>
-  <button class="btn" type="submit">拜入山門</button></form>`);
+  <button class="btn" type="submit">拜入山門</button></form>
+  <p class="sub" style="margin-top:14px">之前上課存過檔？<button type="button" class="btn ghost small" data-act="savep2">讀取存檔</button></p>`);
 }
 function showWorlds(){cur=null;
   showPanel(`<h2>選擇世界</h2><p class="sub">每個世界的題目、積木和進度都共用，只有故事、角色和 3D 場景不同。切換後頁面會重新載入。</p>${worldCards()}`);
@@ -1095,6 +1101,53 @@ fgEl('forge').addEventListener('click',e=>{
 });
 fgEl('fgAsk').addEventListener('submit',e=>{e.preventDefault();const v=fgEl('fgAskIn').value;fgEl('fgAsk').hidden=true;Forge.answer(v);});
 window.addEventListener('resize',()=>{if(window.Forge&&Forge.ready)Forge.resize();});
+
+
+/* ===================== 存檔碼（因應電腦教室還原） ===================== */
+const SAVE_KEYS=()=>{const ks=[SAVE];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('suanyan-proj-'))ks.push(k);}}catch(e){}return ks;};
+const b64u=u8=>{let s='';for(let i=0;i<u8.length;i+=8192)s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');};
+const unb64u=t=>{t=t.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';const s=atob(t),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u;};
+async function packBytes(u8,mode){const cs=new (mode==='c'?CompressionStream:DecompressionStream)('deflate-raw');const st=new Blob([u8]).stream().pipeThrough(cs);return new Uint8Array(await new Response(st).arrayBuffer());}
+async function makeSaveCode(){
+  save();const data={v:1,t:Date.now(),items:{}};SAVE_KEYS().forEach(k=>{try{const v=localStorage.getItem(k);if(v!=null)data.items[k]=v;}catch(e){}});
+  if(!data.items[SAVE])data.items[SAVE]=JSON.stringify(S);
+  const raw=new TextEncoder().encode(JSON.stringify(data));
+  if(window.CompressionStream){try{return 'SY1:'+b64u(await packBytes(raw,'c'));}catch(e){}}
+  return 'SY0:'+b64u(raw);
+}
+async function readSaveCode(code){
+  code=String(code||'').trim().replace(/\s+/g,'');const m=code.match(/SY([01]):([A-Za-z0-9_-]+)/);if(!m)throw new Error('format');
+  let u8=unb64u(m[2]);if(m[1]==='1')u8=await packBytes(u8,'d');
+  const data=JSON.parse(new TextDecoder().decode(u8));if(!data||!data.items||!data.items[SAVE])throw new Error('content');return data;
+}
+async function showSave(){cur=null;
+  showPanel(`<h2>存檔與讀檔</h2><p class="sub">電腦教室關機會還原，瀏覽器裡的進度和積木都會消失。下課前請存檔，下次上課再讀取。</p>
+  <h3>存檔（下課前）</h3><p class="sub">下載存檔檔案，存到隨身碟、雲端硬碟，或寄給自己；也可以複製存檔碼貼到 Google 文件或 Classroom。</p>
+  <div class="row"><button class="btn" data-act="dlsave">下載存檔檔案</button><button class="btn ghost" data-act="cpsave">複製存檔碼</button></div>
+  <h3>讀檔（上課時）</h3><p class="sub">選擇之前下載的存檔檔案，或把存檔碼貼到下面的框裡。讀檔會取代這台電腦目前的進度。</p>
+  <div class="row"><input type="file" id="saveFile" accept=".txt,text/plain"></div>
+  <div class="field"><textarea id="saveText" rows="3" placeholder="或把存檔碼貼在這裡（SY1: 開頭）" autocapitalize="off" spellcheck="false"></textarea></div>
+  <button class="btn" data-act="ldsave">讀取存檔碼</button><div id="saveMsg"></div>`);
+  const f=pn.querySelector('#saveFile');if(f)f.addEventListener('change',async()=>{const file=f.files[0];if(!file)return;loadSaveFromText(await file.text());});
+}
+function saveMsg(t,ok){const m=pn.querySelector('#saveMsg');if(m)m.innerHTML=`<div class="msg ${ok?'ok':'bad'}">${TX(t)}</div>`;else toast(t);}
+async function downloadSave(){
+  try{const code=await makeSaveCode();const d=new Date(),ds=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;
+    const blob=new Blob([code],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`算衍存檔-${(S.name||'弟子').replace(/[\\/:*?"<>|]/g,'')}-${ds}.txt`;
+    document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);saveMsg('已下載存檔檔案。下次上課按「存檔」→ 選擇這個檔案即可接著修行。',true);}
+  catch(e){saveMsg('下載失敗，請改用「複製存檔碼」。',false);}
+}
+async function copySave(btn){
+  try{const code=await makeSaveCode();await navigator.clipboard.writeText(code);saveMsg('存檔碼已複製，請貼到 Google 文件、Classroom 或記事本保存。',true);}
+  catch(e){const code=await makeSaveCode().catch(()=>'');const t=pn.querySelector('#saveText');if(t){t.value=code;t.select();}saveMsg('無法自動複製，存檔碼已放在下面的框裡，請自己全選複製。',false);}
+}
+async function loadSaveFromText(text){
+  try{const data=await readSaveCode(text);
+    try{SAVE_KEYS().forEach(k=>localStorage.removeItem(k));Object.entries(data.items).forEach(([k,v])=>{if(k===SAVE||k.startsWith('suanyan-proj-'))localStorage.setItem(k,v);});}catch(e){saveMsg('這台電腦的瀏覽器不允許儲存資料，無法讀檔。',false);return;}
+    let nm='';try{nm=JSON.parse(data.items[SAVE]).name||'';}catch(e){}
+    saveMsg(`讀檔成功${nm?'：歡迎回來，'+esc(nm):''}！頁面即將重新載入……`,true);setTimeout(()=>location.reload(),1200);}
+  catch(e){saveMsg('讀不懂這個存檔：請確認是完整的存檔檔案或存檔碼（SY1: 開頭）。',false);}
+}
 
 window.addEventListener('hashchange',()=>{if(location.hash==='#elder')showElder();});
 document.body.dataset.theme=THEME_ID;document.title=TX(document.title);
