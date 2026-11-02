@@ -671,12 +671,12 @@ function renderRegion(){
       else if(S.quests[boss.id]){
         const jn=S.notes[n.id+'.journal'];
         h+=`<h3>最後一步：修行心得與長老印記</h3>`;
-        if(!jn){h+=`<p class="sub">把這一區的程式寫成心得（程式說明文件簡易版），可得修為 ${XP.journal}、根基與神識各 +1。</p>
+        if(!jn){const je=JOURNAL_EX[n.id]||JOURNAL_EX.r1;h+=`<p class="sub">把這一區的程式寫成心得（程式說明文件簡易版）。下面已經幫你寫好，看一看就可以直接按「確定」；想加上自己的話也可以刪改。完成可得修為 ${XP.journal}、根基與神識各 +1。</p>
           <form data-form="journal">
-          <div class="field"><label>我用了哪些變數？各存什麼？</label><textarea autocapitalize="off" spellcheck="false" name="v" rows="2" required></textarea></div>
-          <div class="field"><label>程式的流程（先做什麼、再做什麼）</label><textarea autocapitalize="off" spellcheck="false" name="f" rows="2" required></textarea></div>
-          <div class="field"><label>我測了哪些輸入？發現並修正了什麼錯誤？</label><textarea autocapitalize="off" spellcheck="false" name="t" rows="2" required></textarea></div>
-          <button class="btn" type="submit">寫下心得</button></form>`;}
+          <div class="field"><label>我用了哪些變數？各存什麼？</label><textarea autocapitalize="off" spellcheck="false" name="v" rows="2">${je[0]}</textarea></div>
+          <div class="field"><label>程式的流程（先做什麼、再做什麼）</label><textarea autocapitalize="off" spellcheck="false" name="f" rows="2">${je[1]}</textarea></div>
+          <div class="field"><label>我測了哪些輸入？發現並修正了什麼錯誤？</label><textarea autocapitalize="off" spellcheck="false" name="t" rows="2">${je[2]}</textarea></div>
+          <button class="btn" type="submit">確定</button></form>`;}
         else{h+=`<p class="sub">請長老（老師）檢查你的作品與心得，取得長老印記後輸入。</p>
           <form data-form="seal" class="row"><input type="text" name="code" placeholder="長老印記" style="max-width:220px" autocomplete="off"><button class="btn" type="submit">突破境界</button></form>`;}
       }
@@ -689,6 +689,10 @@ const ORDER_EX={
  r1:['丹藥的單價、數量，還有客人付的錢','單價乘以數量算出總價，再算要找多少','說出總價或找零'],
  r2:['年齡、星期、人數','依年齡分段算票價，週末加價、人多打折','說出票價或總價'],
  r3:['每月存多少、存幾個月','用迴圈一個月一個月加上去','說出總共存多少']};
+const JOURNAL_EX={
+ r1:['單價、數量、付款存讀進來的資料；總價存單價乘以數量；找零存要找的錢；一百、五十、十、五存各種靈石的枚數','先讀單價、數量，算出總價；再讀付款，錢不夠說「不足」，夠的話算找零，再從大面額拆成五種靈石','測了付款不夠、付款剛好、找零很多的情況；付款剛好時要說出 0 0 0 0 0'],
+ r2:['年齡、星期、人數存讀進來的資料；票價存每個人的價錢；總價存全部要付的錢','先讀年齡、星期、人數；有不合理的輸入就說「錯誤」；否則依年齡算票價，週末加 20，再乘人數，10 人以上打八折','測了 12、13、18、19、64、65 歲的邊界，也測了星期 0、8 和人數 0 這些錯誤輸入'],
+ r3:['每月存、目標、每月多存存讀進來的資料；存款存目前存了多少；這個月存這個月要存的錢；月數數到第幾個月','先讀三個數；如果每月存和每月多存都是 0 就說「無法達成」；否則用重複直到一個月一個月存，存到目標就說出月數','測了每月存 0、每月多存 0 會停不下來的情況，加上判斷後就修好了；也測了第一個月就存到目標']};
 function newCases(q){return Array.from({length:q.n},(_,i)=>q.gen(i));}
 const ansCost=q=>q.type==='main'?0:q.type==='boss'?20:10;
 const sbBox=code=>`<div class="bkbox" data-src="${esc(code)}"></div>`;
@@ -777,8 +781,7 @@ pn.addEventListener('submit',e=>{
   const n=cur&&NODES[cur.i];if(!n)return;
   if(kind==='order'){const ex=ORDER_EX[n.id]||ORDER_EX.r1;const v={i:fd.get('i').trim()||ex[0],p:fd.get('p').trim()||ex[1],o:fd.get('o').trim()||ex[2]};
     S.notes[n.id+'.order']=v;S.xp+=XP.order;addStat('神識',1);save();cur.msg='委託符已封存，修為 +'+XP.order+'、神識 +1。開始主線吧！';cur.msgType='ok';renderRegion();return;}
-  if(kind==='journal'){const v={v:fd.get('v').trim(),f:fd.get('f').trim(),t:fd.get('t').trim()};
-    if(Object.values(v).some(x=>x.length<4)){cur.msg='每一欄至少寫四個字，讓長老看得懂你的想法。';cur.msgType='bad';renderRegion();return;}
+  if(kind==='journal'){const je=JOURNAL_EX[n.id]||JOURNAL_EX.r1;const v={v:fd.get('v').trim()||je[0],f:fd.get('f').trim()||je[1],t:fd.get('t').trim()||je[2]};
     S.notes[n.id+'.journal']=v;S.xp+=XP.journal;addStat('根基',1);addStat('神識',1);addTitle('著書立說');save();cur.msg='心得已寫下，修為 +'+XP.journal+'。請長老檢查並給你印記。';cur.msgType='ok';renderRegion();return;}
   if(kind==='seal'){const code=(fd.get('code')||'').trim().toUpperCase();
     if(code===n.code){breakthrough(cur.i);}else{cur.msg='印記不符，請向長老確認。';cur.msgType='bad';renderRegion();}return;}
