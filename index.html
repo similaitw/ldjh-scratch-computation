@@ -113,6 +113,9 @@ td input[type=text]{min-width:64px}
 #forge.hidden{display:none}
 .fg-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 14px;background:rgba(8,14,22,.95);border-bottom:1px solid rgba(227,194,122,.45)}
 .fg-title{flex:1;min-width:200px;font-family:var(--serif);font-size:1.15rem;color:var(--gold)}
+.modesw{display:inline-flex;border:1px solid rgba(227,194,122,.6);border-radius:999px;overflow:hidden}
+.modesw button{border:0;background:transparent;color:var(--ink);padding:4px 12px;font-size:.9rem}
+.modesw button.on{background:var(--gold);color:#1a1306;font-weight:700}
 .fg-title .sub{font-family:system-ui,sans-serif;font-size:.85rem;margin:0 0 0 10px}
 .fg-body{display:grid;grid-template-columns:minmax(300px,360px) 1fr 300px;min-height:0}
 #forge.noguide .fg-body{grid-template-columns:0 1fr 300px}
@@ -223,6 +226,7 @@ details.tip div{margin-top:4px;padding:6px 10px;border-left:3px solid var(--jade
 <div id="forge" class="hidden" role="dialog" aria-modal="true" aria-label="修煉室">
   <div class="fg-top">
     <div class="fg-title"><span id="fgTag"></span><b id="fgName"></b><span class="sub" id="fgOrder"></span></div>
+    <div class="modesw" role="group" aria-label="積木模式"><button type="button" data-fg="mode" data-m="Scratch">Scratch</button><button type="button" data-fg="mode" data-m="Blockly">Blockly</button></div>
     <button class="btn small ghost" data-fg="xml" title="下載後可在比賽平台按「上傳 XML」載入">下載 XML</button>
     <button class="btn small ghost" data-fg="guide">步驟與提示</button>
     <button class="btn small ghost" data-fg="back">返回任務</button>
@@ -235,13 +239,13 @@ details.tip div{margin-top:4px;padding:6px 10px;border-left:3px solid var(--jade
         <svg class="fg-hero" viewBox="0 0 84 110" aria-hidden="true"><ellipse cx="42" cy="104" rx="26" ry="5" fill="rgba(0,0,0,.25)"/><path d="M42 40 L68 100 L16 100 Z" fill="#f3f0e8" stroke="#c9c2b0"/><rect x="24" y="62" width="36" height="5" rx="2" fill="#3fa58c"/><path d="M60 64 q14 10 6 30" stroke="#6fe0bf" stroke-width="3" fill="none"/><circle cx="42" cy="30" r="14" fill="#f1c9a0"/><path d="M28 28 q14 -20 28 0 q-6 -8 -14 -8 q-8 0 -14 8z" fill="#1d1d22"/><circle cx="42" cy="12" r="6" fill="#1d1d22"/><circle cx="37" cy="31" r="1.6" fill="#222"/><circle cx="47" cy="31" r="1.6" fill="#222"/></svg>
       </div>
       <h4>自行測試</h4>
-      <p class="sub" style="margin:0 0 6px">和比賽平台一樣：資料用空白或換行隔開，每個「讀取」依序拿一筆。</p>
+      <p class="sub" style="margin:0 0 6px">和比賽平台一樣：資料用空白或換行隔開，輸入積木每用一次就依序拿一筆。</p>
       <textarea id="fgIn" rows="2" autocapitalize="off" spellcheck="false" placeholder="例如：30 2"></textarea>
       <div class="row"><button class="btn" data-fg="go">▶ 執行</button></div>
       <div class="fg-log" id="fgLog"><b>輸出</b><div id="fgOut" class="fg-outtext">（還沒執行）</div></div>
       <div class="fg-vars" id="fgVars"></div>
       <h4>試煉陣法</h4>
-      <p class="sub" style="margin:0 0 8px">按下後，網站會自動出幾組測資（像比賽的評分），把所有「說出」用空白接起來，逐項和答案比對。</p>
+      <p class="sub" style="margin:0 0 8px">按下後，網站會自動出幾組測資（像比賽的評分），把所有輸出用空白接起來，逐項和答案比對。</p>
       <button class="btn" data-fg="test">⚔ 自動試煉</button>
       <div class="fg-res" id="fgResult"></div>
     </aside>
@@ -406,6 +410,10 @@ const NODES=[
  {id:'r9',name:'問道峰',x:17,y:10}
 ];
 NODES.forEach((n,i)=>{n.realm=RL(i+1);const o=THEME.nodes&&THEME.nodes[i];if(o){n.name=o.name;if(o.npc)n.npc=o.npc;if(o.lines)n.lines=o.lines;if(o.scroll&&n.scroll)n.scroll.title=o.scroll;}});
+/* ===================== 積木模式：和比賽平台一樣可切換 Scratch / Blockly ===================== */
+let MODE='Scratch';try{const sv=JSON.parse(localStorage.getItem('suanyan-v1')||'{}');if(sv.mode==='Blockly')MODE='Blockly';}catch(e){}
+const MXD=[['「事件與輸入輸出」','「文字」'],['讀取數字','要求輸入數字'],['讀取文字','要求輸入文字'],['讀取','輸入'],['說出','輸出']];
+const MX=t=>{t=String(t??'');if(MODE!=='Blockly')return t;for(const [a,b] of MXD)t=t.split(a).join(b);return t;};
 /* ===================== 每個任務的引導：範例、步驟、小提示、參考程式（競賽版 Blockly 積木） ===================== */
 const IND=(t,n=1)=>t.split('\n').map(x=>'  '.repeat(n)+x).join('\n');
 const HAT=body=>'當綠旗被點擊\n'+IND(body);
@@ -440,7 +448,8 @@ const ZG=body=>J('如果 '+ZERO,'  說出 「無法達成」','否則',IND(body)
 const GUIDE={
  r1m:{ex:'輸入 30 2 → 說出 60',
   steps:[
-   {t:'到「事件與輸入輸出」拖出「當綠旗被點擊」。這一區所有的積木都要放在它的開口裡面。',b:'當綠旗被點擊',tip:'沒有放進去的積木不會執行。修煉室一打開就已經放好一個了。'},
+   {only:'Scratch',t:'到「事件與輸入輸出」拖出「當綠旗被點擊」。這一區所有的積木都要放在它的開口裡面。',b:'當綠旗被點擊',tip:'沒有放進去的積木不會執行。修煉室一打開就已經放好一個了。'},
+   {only:'Blockly',t:'Blockly 模式沒有綠旗：積木直接從上往下接在工作區，執行時從最上面的積木開始。輸入輸出積木在「文字」類的最下面。',tip:'切換回 Scratch 模式時，網站會像比賽平台一樣，自動把積木包進「當綠旗被點擊」。'},
    {t:'到「變數」按「建立變數…」，建立三個變數：單價、數量、總價。',tip:'變數就像貼了名字的盒子。這一區每一題都會繼續用這些變數，不用重新建立。'},
    {t:'用「賦值 … 成」接上「讀取數字」，依序讀進單價和數量。',b:J('賦值 單價 成 讀取數字()','賦值 數量 成 讀取數字()'),tip:'每個「讀取數字」會依序拿到下一筆輸入。這一題輸入兩個數，就要讀兩次。'},
    {t:'算出總價，再用「說出」輸出。',b:J('賦值 總價 成 單價 × 數量','說出 總價'),tip:'乘法在「數學」類的「1 + 1」積木，點下拉選單改成 ×。'}],
@@ -652,7 +661,7 @@ function renderRegion(){
     }else{
       h+=`<h3>修行任務</h3>`;
       n.quests.forEach(q=>{const done=S.quests[q.id],ready=questReady(n,q);
-        h+=`<div class="quest ${done?'done':''} ${!ready&&!done?'locked':''}"><div class="info"><span class="tag ${q.type}">${TYPE_NAME[q.type]}</span><span class="name">${q.title}</span>${done?' <span style="color:var(--ok)">✓ 完成</span>':''}<div class="sub" style="margin:2px 0 0">${q.desc}</div></div>
+        h+=`<div class="quest ${done?'done':''} ${!ready&&!done?'locked':''}"><div class="info"><span class="tag ${q.type}">${TYPE_NAME[q.type]}</span><span class="name">${q.title}</span>${done?' <span style="color:var(--ok)">✓ 完成</span>':''}<div class="sub" style="margin:2px 0 0">${MX(q.desc)}</div></div>
         <button class="btn small" data-act="trial" data-q="${q.id}" ${ready?'':'disabled'}>${done?'再練一次':'開始試煉'}</button></div>`;});
       h+=`<p class="sub">這一區是同一個法器一路往下做：任務要依序完成，每一題都接著上一題的積木往下改；斬除心魔後會出現奇遇加碼。修煉室會自動保留你的積木和變數。</p>`;
       const boss=n.quests.find(q=>q.type==='boss');
@@ -685,7 +694,7 @@ async function renderSnips(root){
   try{await blocklyLibs();}catch(e){boxes.forEach(b=>{b.classList.add('err');b.textContent='積木圖載入失敗：'+b.dataset.src;b.dataset.done=1;});return;}
   for(const [el,ws] of SNIPS){if(!document.body.contains(el)){try{ws.dispose();}catch(e){}SNIPS.delete(el);}}
   boxes.forEach(box=>{box.dataset.done=1;
-    try{const tops=BDSL.parse(box.dataset.src);const sc=.8;box.style.height='60px';
+    try{let tops=BDSL.parse(box.dataset.src);if(MODE==='Blockly')tops=Forge.convertTops(tops,'Blockly');const sc=.8;box.style.height='60px';
       const ws=Blockly.inject(box,{readOnly:true,renderer:'geras',media:'lib/blockly/media/',scrollbars:false,zoom:{startScale:sc,wheel:false,controls:false},move:{scrollbars:false,drag:false,wheel:false},sounds:false});
       tops.forEach(t=>Blockly.serialization.blocks.append(t,ws));
       const bb=ws.getBlocksBoundingBox(),w=(bb.right-bb.left)*sc+24,h=(bb.bottom-bb.top)*sc+16;
@@ -695,11 +704,11 @@ async function renderSnips(root){
 }
 function guideHTML(q,withHead){
   const G=GUIDE[q.id],opened=!!S.hints[q.id];let h='';
-  if(withHead)h+=`<div class="spec">${q.desc}</div><div class="example"><b>範例：</b>${G.ex}</div>`;
+  if(withHead)h+=`<div class="spec">${MX(q.desc)}</div><div class="example"><b>範例：</b>${MX(G.ex)}</div>`;
   const qi=NODES.findIndex(n=>n.quests&&n.quests.includes(q)),qk=qi>=0?NODES[qi].quests.indexOf(q):0;
   if(qk>0)h+=`<div class="msg info" style="margin-top:10px">接著上一題往下做：修煉室已保留你之前的積木和變數，只要照下面的步驟修改、加上新的部分。</div>`;
   h+=`<p class="sub" style="margin-top:10px">照著步驟拼積木，卡住時點「小提示」。</p><ol class="steps">`;
-  G.steps.forEach(st=>{h+=`<li><div>${st.t}</div>${st.b?sbBox(st.b):''}${st.tip?`<details class="tip"><summary>小提示</summary><div>${st.tip}</div></details>`:''}</li>`;});
+  G.steps.filter(st=>!st.only||st.only===MODE).forEach(st=>{h+=`<li><div>${MX(st.t)}</div>${st.b?sbBox(st.b):''}${st.tip?`<details class="tip"><summary>小提示</summary><div>${MX(st.tip)}</div></details>`:''}</li>`;});
   h+=`</ol><h3>師尊錦囊：完整參考程式</h3>`;
   if(opened)h+=`<p class="sub">先自己拼拼看，再對照這份參考程式。寫法不一定要完全一樣，試煉通過就可以。</p>${sbBox(G.answer)}`;
   else{const c=ansCost(q);h+=`<p class="sub">真的卡住了再打開。${c?`打開需要消耗修為 ${c}。`:'主線的錦囊免費。'}</p><button type="button" class="btn ghost" data-act="answer" data-q="${q.id}">打開錦囊${c?`（修為 −${c}）`:'（免費）'}</button>`;}
@@ -707,8 +716,8 @@ function guideHTML(q,withHead){
 }
 function renderTrial(n){
   const q=n.quests.find(x=>x.id===cur.trial.q),tr=cur.trial,G=GUIDE[q.id],opened=!!S.hints[q.id],tab=tr.tab||'learn';
-  let h=`<h3><span class="tag ${q.type}">${TYPE_NAME[q.type]}</span>${q.title}</h3><div class="spec">${q.desc}</div>
-  <div class="example"><b>範例：</b>${G.ex}</div>
+  let h=`<h3><span class="tag ${q.type}">${TYPE_NAME[q.type]}</span>${q.title}</h3><div class="spec">${MX(q.desc)}</div>
+  <div class="example"><b>範例：</b>${MX(G.ex)}</div>
   <div class="tabs"><button type="button" class="btn small ${tab==='learn'?'on':'ghost'}" data-act="tab" data-tab="learn">① 一步一步做</button>
   <button type="button" class="btn small ${tab==='test'?'on':'ghost'}" data-act="tab" data-tab="test">② 試煉陣法（驗證）</button></div>`;
   if(tab==='learn'){
@@ -816,7 +825,7 @@ function showChar(){
 function showScrolls(){cur=null;
   let h=`<h2>功法秘笈</h2><p class="sub">完成每一區的主線後習得，裡面是這一區會用到的積木。</p>`;
   NODES.filter(n=>n.impl).forEach(n=>{const got=S.quests[n.quests[0].id];
-    h+=got?`<div class="scroll"><h4>${n.scroll.title}（${n.name}）</h4><ul>${n.scroll.items.map(x=>`<li>${x}</li>`).join('')}</ul></div>`
+    h+=got?`<div class="scroll"><h4>${n.scroll.title}（${n.name}）</h4><ul>${n.scroll.items.map(x=>`<li>${MX(x)}</li>`).join('')}</ul></div>`
       :`<div class="scroll lock"><h4>？？？（${n.name}）</h4>完成「${n.name}」主線後習得。</div>`;});
   showPanel(h);
 }
@@ -825,7 +834,7 @@ function showHelp(){cur=null;
   <ol>
   <li>在地圖上點「坊市」前往，聽 NPC 說明委託。</li>
   <li>先填「委託符」：輸入、處理、輸出各寫一句。</li>
-  <li>按「開始試煉」進入修煉室：左邊是步驟與小提示，中間的積木和宜蘭縣資訊科技創意實作競賽平台一模一樣（Blockly 的 Scratch 模式）。</li>
+  <li>按「開始試煉」進入修煉室：左邊是步驟與小提示，中間的積木和宜蘭縣資訊科技創意實作競賽平台一模一樣，也一樣可以在上方切換「Scratch」或「Blockly」模式。</li>
   <li>在右邊「自行測試」輸入資料（用空白隔開），按「▶ 執行」看輸出。</li>
   <li>覺得對了就按「⚔ 自動試煉」，網站會自動出題檢查，全對就破陣。同一區的積木會自動保存。</li>
   <li>主線 → 支線 → 斬心魔。心魔最愛邊界值和奇怪的輸入，記得自己先測。</li>
@@ -857,7 +866,7 @@ function showWorlds(){cur=null;
 /* ===================== 修煉室（內建競賽版 Blockly 積木） ===================== */
 const FG={libs:null,region:null,q:null,n:null,busy:false};
 const fgEl=id=>document.getElementById(id);
-const LIBV='?v=3';
+const LIBV="?v=4";
 function loadScript(src){return new Promise((ok,no)=>{const t=document.createElement('script');t.src=src;t.onload=ok;t.onerror=()=>no(new Error(src));document.head.appendChild(t);});}
 function blocklyLibs(){if(!FG.libs)FG.libs=loadScript('lib/blockly/blockly_compressed.js'+LIBV).then(()=>loadScript('lib/blockly/blocks_compressed.js'+LIBV))
   .then(()=>loadScript('lib/blockly/javascript_compressed.js'+LIBV)).then(()=>loadScript('lib/blockly/msg/zh-hant.js'+LIBV))
@@ -876,7 +885,7 @@ async function openForge(n,q){
   FG.n=n;FG.q=q;
   const f=fgEl('forge');f.classList.remove('hidden');f.classList.remove('showguide');
   fgEl('fgTag').innerHTML=`<span class="tag ${q.type}">${TYPE_NAME[q.type]}</span>`;fgEl('fgName').textContent=TX(n.name+'・'+q.title);
-  fgEl('fgOrder').textContent='讀取順序：'+q.in.join(' → ')+'；用「說出」輸出答案';
+  fgOrder();
   fgEl('fgGuide').innerHTML=TX(guideHTML(q,true));
   fgEl('fgResult').innerHTML='';fgEl('fgOut').textContent='（還沒執行）';fgEl('fgBubble').hidden=true;fgEl('fgVars').innerHTML='';
   fgEl('fgIn').value=q.gen(1).in.join(' ');
@@ -884,13 +893,18 @@ async function openForge(n,q){
   if(!Forge.ready){Forge.init(fgEl('fgWs'),{media:'lib/blockly/media/',
     prompt:(t,d,cb)=>fgPrompt(t||'新的變數名稱',d,v=>cb(v)),
     confirm:(m,cb)=>fgPrompt(m,'',cb,true),toast,
-    onChange:()=>{if(FG.region){try{localStorage.setItem(projKey(FG.region),Forge.json());}catch(e){}}}});}
+    onChange:()=>{if(FG.region){try{localStorage.setItem(projKey(FG.region),Forge.json());}catch(e){}}}},MODE);}
   if(FG.region!==n.id){FG.region=n.id;let saved=null;try{saved=localStorage.getItem(projKey(n.id));}catch(e){}Forge.load(saved);}
   fgEl('fgLoading').style.display='none';setTimeout(Forge.resize,60);
   renderSnips(fgEl('fgGuide'));
 }
+function fgOrder(){const q=FG.q;if(!q)return;fgEl('fgOrder').textContent=MX('讀取順序：'+q.in.join(' → ')+'；用「說出」輸出答案');
+  document.querySelectorAll('.modesw button').forEach(b=>b.classList.toggle('on',b.dataset.m===MODE));}
+function setMode(m){if(m===MODE)return;MODE=m;S.mode=m;save();if(window.Forge&&Forge.ready)Forge.setMode(m);fgOrder();
+  if(FG.q){fgEl('fgGuide').innerHTML=TX(guideHTML(FG.q,true));renderSnips(fgEl('fgGuide'));}fgEl('fgResult').innerHTML='';fgEl('fgOut').textContent='（還沒執行）';
+  toast(m==='Scratch'?'已切換到 Scratch 模式：程式放在「當綠旗被點擊」裡，用「讀取數字」「說出」。':'已切換到 Blockly 模式：沒有綠旗，用「文字」類的「要求輸入數字」「輸出」。');}
 function closeForge(){fgEl('forge').classList.add('hidden');if(cur){cur.view='board';cur.trial=null;renderRegion();}updateHud();}
-function structureNote(){const h=Forge.hats(),l=Forge.loose();
+function structureNote(){if(MODE==='Blockly')return'';const h=Forge.hats(),l=Forge.loose();
   if(h===0)return'找不到「當綠旗被點擊」積木：程式要放在它的開口裡面。';
   if(h>1)return`畫面上有 ${h} 個「當綠旗被點擊」，它們都會執行，輸出會重複。請只留一個。`;
   if(l>0)return'有積木沒有放進「當綠旗被點擊」裡面，那些積木不會執行。';return'';}
@@ -899,13 +913,13 @@ function forgeRun(){
   const r=Forge.run(fgEl('fgIn').value,3000);let t=r.output;
   if(r.timedOut)t+=(t?'\n':'')+'⚠ 執行超時：程式停不下來，可能是無窮迴圈。';
   else if(r.error)t+=(t?'\n':'')+'⚠ 執行錯誤：'+r.error;
-  fgEl('fgOut').textContent=(sn?'⚠ '+sn+'\n':'')+(t||'（沒有輸出）');
+  fgEl('fgOut').textContent=(sn?'⚠ '+sn+'\n':'')+(t||MX('（沒有輸出）'));
   const b=fgEl('fgBubble');b.textContent=r.says.length?r.says[r.says.length-1]:'';b.hidden=!r.says.length;showVars(r.vars);
 }
 function forgeTest(){
   if(FG.busy||!window.Forge||!Forge.ready)return;FG.busy=true;try{
   const q=FG.q,n=FG.n,cases=newCases(q),box=fgEl('fgResult');
-  const sn=structureNote();if(Forge.hats()!==1){box.innerHTML=`<div class="msg bad">${sn}</div>`;return;}
+  const sn=structureNote();if(MODE==='Scratch'&&Forge.hats()!==1){box.innerHTML=`<div class="msg bad">${sn}</div>`;return;}
   const rows=[];let ok=0;const notes=new Set();if(sn)notes.add(sn);
   cases.forEach(c=>{const r=Forge.run(c.in.map(String),3000),exp=String(c.out[0]),good=!r.timedOut&&!r.error&&same(exp,r.output);if(good)ok++;
     if(r.timedOut)notes.add('有一組程式停不下來（執行超時），可能是無窮迴圈。');
@@ -919,7 +933,7 @@ function forgeTest(){
   let h=`<table><thead><tr><th>輸入</th><th>正確輸出</th><th>你的輸出</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
   if(ok===cases.length){const first=complete(n,q);h+=`<div class="msg ok">破陣成功！「${q.title}」完成${first?`，修為 +${XP[q.type]}`:'（已熟練）'}。${first&&q.type==='main'?'<br>習得'+n.scroll.title+'。':''}</div><div class="row"><button class="btn" data-fg="back">返回任務</button></div>`;updateHud();}
   else h+=`<div class="msg bad">答對 ${ok} / ${cases.length} 組。${[...notes].join('')||'看看打 ✗ 的那幾組，是不是邊界值或特殊情況沒處理？'}<br>可以打開左邊的「小提示」。</div>`;
-  box.innerHTML=TX(h);}finally{FG.busy=false;}
+  box.innerHTML=TX(MX(h));}finally{FG.busy=false;}
 }
 fgEl('forge').addEventListener('click',e=>{
   const b=e.target.closest('[data-fg],[data-act=answer]');if(!b)return;
@@ -928,6 +942,7 @@ fgEl('forge').addEventListener('click',e=>{
   const a=b.dataset.fg;
   if(a==='back')closeForge();
   else if(a==='go')forgeRun();
+  else if(a==='mode')setMode(b.dataset.m);
   else if(a==='xml'){if(!window.Forge||!Forge.ready)return;const x=Blockly.Xml.domToPrettyText(Blockly.Xml.workspaceToDom(Forge.ws));const bl=new Blob([x],{type:'text/xml'}),l=document.createElement('a');
     l.href=URL.createObjectURL(bl);l.download=TX(FG.n.name)+'-'+FG.q.title+'.xml';document.body.appendChild(l);l.click();setTimeout(()=>{URL.revokeObjectURL(l.href);l.remove();},1000);toast('已下載 XML，到比賽平台按「上傳 XML」就能載入同一份積木。');}
   else if(a==='test')forgeTest();
