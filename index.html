@@ -722,8 +722,8 @@ async function renderSnips(root){
   try{await blocklyLibs();}catch(e){boxes.forEach(b=>{b.classList.add('err');b.textContent='積木圖載入失敗：'+b.dataset.src;b.dataset.done=1;});return;}
   for(const [el,ws] of SNIPS){if(!document.body.contains(el)){try{ws.dispose();}catch(e){}SNIPS.delete(el);}}
   boxes.forEach(box=>{box.dataset.done=1;
-    try{let tops=BDSL.parse(box.dataset.src);if(MODE==='Blockly')tops=Forge.convertTops(tops,'Blockly');const sc=.8;box.style.height='60px';
-      const ws=Blockly.inject(box,{readOnly:true,renderer:'geras',media:'lib/blockly/media/',scrollbars:false,zoom:{startScale:sc,wheel:false,controls:false},move:{scrollbars:false,drag:false,wheel:false},sounds:false});
+    try{let tops=BDSL.parse(box.dataset.src);if(MODE==='Blockly')tops=Forge.convertTops(tops,'Blockly');const sc=MODE==='Scratch'?.62:.8;box.style.height='60px';
+      const ws=Blockly.inject(box,{readOnly:true,...Forge.look(Blockly,MODE),media:'lib/blockly/media/',scrollbars:false,zoom:{startScale:sc,wheel:false,controls:false},move:{scrollbars:false,drag:false,wheel:false},sounds:false});
       tops.forEach(t=>Blockly.serialization.blocks.append(t,ws));
       const bb=ws.getBlocksBoundingBox(),w=(bb.right-bb.left)*sc+24,h=(bb.bottom-bb.top)*sc+16;
       box.style.height=Math.ceil(h)+'px';box.firstChild.style.width=Math.max(w,box.clientWidth)+'px';Blockly.svgResize(ws);
@@ -893,7 +893,7 @@ function showWorlds(){cur=null;
 /* ===================== 修煉室（內建競賽版 Blockly 積木） ===================== */
 const FG={libs:null,region:null,q:null,n:null,busy:false};
 const fgEl=id=>document.getElementById(id);
-const LIBV="?v=5";
+const LIBV="?v=6";
 function loadScript(src){return new Promise((ok,no)=>{const t=document.createElement('script');t.src=src;t.onload=ok;t.onerror=()=>no(new Error(src));document.head.appendChild(t);});}
 function blocklyLibs(){if(!FG.libs)FG.libs=loadScript('lib/blockly/blockly_compressed.js'+LIBV).then(()=>loadScript('lib/blockly/blocks_compressed.js'+LIBV))
   .then(()=>loadScript('lib/blockly/javascript_compressed.js'+LIBV)).then(()=>loadScript('lib/blockly/msg/zh-hant.js'+LIBV))
