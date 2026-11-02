@@ -652,12 +652,13 @@ function renderRegion(){
     if(cur.msg)h+=`<div class="msg ${cur.msgType||'info'}">${cur.msg}</div>`;
     const ord=S.notes[n.id+'.order'];
     if(!ord){
-      h+=`<h3>第一步：填寫委託符</h3><p class="sub">動手寫程式前，先用三句話想清楚：輸入什麼、怎麼算、輸出什麼。不用寫得很完整，參考框裡的例子就好。填完可得修為 ${XP.order}、神識 +1。</p>
+      const ex=ORDER_EX[n.id]||ORDER_EX.r1;
+      h+=`<h3>第一步：填寫委託符</h3><p class="sub">動手寫程式前，先想清楚三件事：輸入什麼、怎麼算、輸出什麼。下面已經幫你寫好提示，看一看就可以直接按「確定」；想用自己的話改寫也可以。完成可得修為 ${XP.order}、神識 +1。</p>
       <form data-form="order">
-      <div class="field"><label>使用者會輸入什麼？</label><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" name="i" required placeholder="例如：丹藥的單價和數量"></div>
-      <div class="field"><label>程式要怎麼處理？</label><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" name="p" required placeholder="例如：把單價乘以數量"></div>
-      <div class="field"><label>最後要輸出什麼？</label><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" name="o" required placeholder="例如：說出總價"></div>
-      <div class="row"><button class="btn" type="submit">封存委託符</button><button class="btn ghost" type="button" data-act="replay">重看對話</button></div></form>`;
+      <div class="field"><label>使用者會輸入什麼？</label><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" name="i" value="${ex[0]}"></div>
+      <div class="field"><label>程式要怎麼處理？</label><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" name="p" value="${ex[1]}"></div>
+      <div class="field"><label>最後要輸出什麼？</label><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" name="o" value="${ex[2]}"></div>
+      <div class="row"><button class="btn" type="submit">確定</button><button class="btn ghost" type="button" data-act="replay">重看對話</button></div></form>`;
     }else{
       h+=`<h3>修行任務</h3>`;
       n.quests.forEach(q=>{const done=S.quests[q.id],ready=questReady(n,q);
@@ -684,6 +685,10 @@ function renderRegion(){
   }
   showPanel(h);
 }
+const ORDER_EX={
+ r1:['丹藥的單價、數量，還有客人付的錢','單價乘以數量算出總價，再算要找多少','說出總價或找零'],
+ r2:['年齡、星期、人數','依年齡分段算票價，週末加價、人多打折','說出票價或總價'],
+ r3:['每月存多少、存幾個月','用迴圈一個月一個月加上去','說出總共存多少']};
 function newCases(q){return Array.from({length:q.n},(_,i)=>q.gen(i));}
 const ansCost=q=>q.type==='main'?0:q.type==='boss'?20:10;
 const sbBox=code=>`<div class="bkbox" data-src="${esc(code)}"></div>`;
@@ -770,8 +775,7 @@ pn.addEventListener('submit',e=>{
   if(kind==='name'){const nm=(fd.get('name')||'').trim();if(!nm){return;}S.name=nm.slice(0,20);addTitle('初入仙途');save();closePanel();
     toast('歡迎拜入算衍宗，'+S.name+'！先到「坊市」接第一個委託。');return;}
   const n=cur&&NODES[cur.i];if(!n)return;
-  if(kind==='order'){const v={i:fd.get('i').trim(),p:fd.get('p').trim(),o:fd.get('o').trim()};
-    if(Object.values(v).some(x=>x.length<2)){cur.msg='每一格至少寫兩個字。';cur.msgType='bad';renderRegion();return;}
+  if(kind==='order'){const ex=ORDER_EX[n.id]||ORDER_EX.r1;const v={i:fd.get('i').trim()||ex[0],p:fd.get('p').trim()||ex[1],o:fd.get('o').trim()||ex[2]};
     S.notes[n.id+'.order']=v;S.xp+=XP.order;addStat('神識',1);save();cur.msg='委託符已封存，修為 +'+XP.order+'、神識 +1。開始主線吧！';cur.msgType='ok';renderRegion();return;}
   if(kind==='journal'){const v={v:fd.get('v').trim(),f:fd.get('f').trim(),t:fd.get('t').trim()};
     if(Object.values(v).some(x=>x.length<4)){cur.msg='每一欄至少寫四個字，讓長老看得懂你的想法。';cur.msgType='bad';renderRegion();return;}
