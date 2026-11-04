@@ -116,6 +116,7 @@ td input[type=text]{min-width:64px}
 .modesw{display:inline-flex;border:1px solid rgba(227,194,122,.6);border-radius:999px;overflow:hidden}
 .modesw button{border:0;background:transparent;color:var(--ink);padding:4px 12px;font-size:.9rem}
 .modesw button.on{background:var(--gold);color:#1a1306;font-weight:700}
+.btn.quick{background:linear-gradient(135deg,#ffcf5a,#f08a2c);color:#2a1604;border:0;font-weight:800;box-shadow:0 0 12px rgba(255,190,80,.45)}
 .musicbtn.off{opacity:.55;text-decoration:line-through}
 .fg-title .sub{font-family:system-ui,sans-serif;font-size:.85rem;margin:0 0 0 10px}
 .fg-body{display:grid;grid-template-columns:minmax(300px,360px) 1fr 300px;min-height:0}
@@ -231,6 +232,7 @@ details.tip div{margin-top:4px;padding:6px 10px;border-left:3px solid var(--jade
     <div class="modesw" role="group" aria-label="積木模式"><button type="button" data-fg="mode" data-m="Scratch">Scratch</button><button type="button" data-fg="mode" data-m="Blockly">Blockly</button></div>
     <button class="btn small ghost musicbtn" data-fg="music" title="背景音樂開關">♪</button>
     <button class="btn small ghost" data-fg="xml" title="下載後可在比賽平台按「上傳 XML」載入">下載 XML</button>
+    <button class="btn small quick" data-fg="quick" title="把參考答案直接放進積木區">⚡ 快速解答</button>
     <button class="btn small ghost" data-fg="guide">步驟與提示</button>
     <button class="btn small ghost" data-fg="back">返回任務</button>
   </div>
@@ -713,7 +715,7 @@ const JOURNAL_EX={
  r2:['年齡、星期、人數存讀進來的資料；票價存每個人的價錢；總價存全部要付的錢','先讀年齡、星期、人數；有不合理的輸入就說「錯誤」；否則依年齡算票價，週末加 20，再乘人數，10 人以上打八折','測了 12、13、18、19、64、65 歲的邊界，也測了星期 0、8 和人數 0 這些錯誤輸入'],
  r3:['每月存、目標、每月多存存讀進來的資料；存款存目前存了多少；這個月存這個月要存的錢；月數數到第幾個月','先讀三個數；如果每月存和每月多存都是 0 就說「無法達成」；否則用重複直到一個月一個月存，存到目標就說出月數','測了每月存 0、每月多存 0 會停不下來的情況，加上判斷後就修好了；也測了第一個月就存到目標']};
 function newCases(q){return Array.from({length:q.n},(_,i)=>q.gen(i));}
-const ansCost=q=>q.type==='main'?0:q.type==='boss'?20:10;
+const ansCost=q=>0;
 const sbBox=code=>`<div class="bkbox" data-src="${esc(code)}"></div>`;
 /* 引導積木圖：用唯讀的 Blockly 工作區畫出來，和比賽平台的積木長得一樣 */
 const SNIPS=new Map();
@@ -739,7 +741,8 @@ function guideHTML(q,withHead){
   G.steps.filter(st=>!st.only||st.only===MODE).forEach(st=>{h+=`<li><div>${MX(st.t)}</div>${st.b?sbBox(st.b):''}${st.tip?`<details class="tip"><summary>小提示</summary><div>${MX(st.tip)}</div></details>`:''}</li>`;});
   h+=`</ol><h3>師尊錦囊：完整參考程式</h3>`;
   if(opened)h+=`<p class="sub">先自己拼拼看，再對照這份參考程式。寫法不一定要完全一樣，試煉通過就可以。</p>${sbBox(G.answer)}`;
-  else{const c=ansCost(q);h+=`<p class="sub">真的卡住了再打開。${c?`打開需要消耗修為 ${c}。`:'主線的錦囊免費。'}</p><button type="button" class="btn ghost" data-act="answer" data-q="${q.id}">打開錦囊${c?`（修為 −${c}）`:'（免費）'}</button>`;}
+  else h+=`<p class="sub">卡住了就打開看（免費）。</p><button type="button" class="btn ghost" data-act="answer" data-q="${q.id}">打開錦囊</button>`;
+  if(withHead)h+=`<p class="sub" style="margin-top:8px">想直接看答案怎麼運作？按「快速解答」，參考答案會直接放進積木區，再按「⚔ 自動試煉」就能過關。</p><button type="button" class="btn quick" data-fg="quick">⚡ 快速解答：直接放入答案積木</button>`;
   return h;
 }
 function renderTrial(n){
@@ -868,7 +871,7 @@ function showHelp(){cur=null;
   <li>斬完心魔寫「修行心得」，請老師檢查後給你「長老印記」，就能突破境界。</li>
   </ol>
   <p class="sub">境界：${THEME.realms.join(' → ')}。過了第六區後要通過宗門大比（對應縣賽）。這一版開放前三區。</p>
-  <p class="sub">小提示都免費。真的卡住可以打開師尊錦囊看完整參考程式：主線免費，支線與奇遇扣 10 修為，斬心魔扣 20 修為。</p>`);
+  <p class="sub">小提示和師尊錦囊都免費。真的卡住，在修煉室按「⚡ 快速解答」，參考答案會直接放進積木區，按「⚔ 自動試煉」就能過關，再回頭看每個積木在做什麼。</p>`);
 }
 function showElder(){cur=null;
   showPanel(`<h2>長老專區</h2><p class="sub">學生斬完心魔、寫好修行心得後，請檢查作品再給印記。</p>
@@ -943,6 +946,17 @@ function forgeRun(){
   fgEl('fgOut').textContent=(sn?'⚠ '+sn+'\n':'')+(t||MX('（沒有輸出）'));
   const b=fgEl('fgBubble');b.textContent=r.says.length?r.says[r.says.length-1]:'';b.hidden=!r.says.length;showVars(r.vars);
 }
+/* 快速解答：把參考答案直接放進積木區（原本的積木會被取代） */
+function quickAnswer(){
+  if(!window.Forge||!Forge.ready||!FG.q)return;const q=FG.q,G=GUIDE[q.id];if(!G||!G.answer)return;
+  let tops;try{tops=BDSL.parse(G.answer);}catch(e){console.error(e);toast('解答載入失敗。');return;}
+  Forge.load(JSON.stringify({blocks:{languageVersion:0,blocks:tops}}));
+  if(!S.hints[q.id]){S.hints[q.id]=true;save();}
+  fgEl('fgGuide').innerHTML=TX(guideHTML(q,true));renderSnips(fgEl('fgGuide'));
+  fgEl('fgResult').innerHTML='';fgEl('fgOut').textContent='（還沒執行）';
+  setTimeout(()=>{try{if(FG.region)localStorage.setItem(projKey(FG.region),Forge.json());}catch(e){}},120);
+  toast('參考答案已放進積木區。按「▶ 執行」試試，或直接按「⚔ 自動試煉」過關。');
+}
 function forgeTest(){
   if(FG.busy||!window.Forge||!Forge.ready)return;FG.busy=true;try{
   const q=FG.q,n=FG.n,cases=newCases(q),box=fgEl('fgResult');
@@ -967,6 +981,7 @@ fgEl('forge').addEventListener('click',e=>{
   if(b.dataset.act==='answer'){const q=FG.q;if(S.hints[q.id])return;S.xp=Math.max(0,S.xp-ansCost(q));S.hints[q.id]=true;save();updateHud();
     fgEl('fgGuide').innerHTML=TX(guideHTML(q,true));renderSnips(fgEl('fgGuide'));return;}
   const a=b.dataset.fg;
+  if(a==='quick'){quickAnswer();return;}
   if(a==='back')closeForge();
   else if(a==='go')forgeRun();
   else if(a==='mode')setMode(b.dataset.m);
