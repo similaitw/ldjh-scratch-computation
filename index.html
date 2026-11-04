@@ -691,15 +691,15 @@ function renderRegion(){
         <h3>延伸修行：上比賽平台實戰</h3><p class="sub">用下面的「競賽對照」挑一題，到比賽平台用一樣的積木寫寫看，按「評分」拿到 100 分才算過關。</p>`;}
       else if(S.quests[boss.id]){
         const jn=S.notes[n.id+'.journal'];
-        h+=`<h3>最後一步：修行心得與長老印記</h3>`;
-        if(!jn){const je=JOURNAL_EX[n.id]||JOURNAL_EX.r1;h+=`<p class="sub">把這一區的程式寫成心得（程式說明文件簡易版）。下面已經幫你寫好，看一看就可以直接按「確定」；想加上自己的話也可以刪改。完成可得修為 ${XP.journal}、根基與神識各 +1。</p>
+        h+=`<h3>最後一步：修行心得</h3>`;
+        if(!jn){const je=JOURNAL_EX[n.id]||JOURNAL_EX.r1;h+=`<p class="sub">把這一區的程式寫成心得（程式說明文件簡易版）。下面已經幫你寫好，看一看就可以直接按「確定」；想加上自己的話也可以刪改。按「確定」就直接突破境界，並得修為 ${XP.journal}、根基與神識各 +1。</p>
           <form data-form="journal">
           <div class="field"><label>我用了哪些變數？各存什麼？</label><textarea autocapitalize="off" spellcheck="false" name="v" rows="2">${je[0]}</textarea></div>
           <div class="field"><label>程式的流程（先做什麼、再做什麼）</label><textarea autocapitalize="off" spellcheck="false" name="f" rows="2">${je[1]}</textarea></div>
           <div class="field"><label>我測了哪些輸入？發現並修正了什麼錯誤？</label><textarea autocapitalize="off" spellcheck="false" name="t" rows="2">${je[2]}</textarea></div>
-          <button class="btn" type="submit">確定</button></form>`;}
-        else{h+=`<p class="sub">請長老（老師）檢查你的作品與心得，取得長老印記後輸入。</p>
-          <form data-form="seal" class="row"><input type="text" name="code" placeholder="長老印記" style="max-width:220px" autocomplete="off"><button class="btn" type="submit">突破境界</button></form>`;}
+          <button class="btn" type="submit">確定，突破境界</button></form>`;}
+        else{h+=`<p class="sub">心得已寫好，可以突破境界了。</p>
+          <form data-form="seal" class="row"><button class="btn" type="submit">突破境界</button></form>`;}
       }
       h+=ictHTML(n.id)+`<div class="row"><button class="btn ghost small" data-act="replay">重看對話</button></div>`;
     }
@@ -804,9 +804,8 @@ pn.addEventListener('submit',e=>{
   if(kind==='order'){const ex=ORDER_EX[n.id]||ORDER_EX.r1;const v={i:fd.get('i').trim()||ex[0],p:fd.get('p').trim()||ex[1],o:fd.get('o').trim()||ex[2]};
     S.notes[n.id+'.order']=v;S.xp+=XP.order;addStat('神識',1);save();cur.msg='委託符已封存，修為 +'+XP.order+'、神識 +1。開始主線吧！';cur.msgType='ok';renderRegion();return;}
   if(kind==='journal'){const je=JOURNAL_EX[n.id]||JOURNAL_EX.r1;const v={v:fd.get('v').trim()||je[0],f:fd.get('f').trim()||je[1],t:fd.get('t').trim()||je[2]};
-    S.notes[n.id+'.journal']=v;S.xp+=XP.journal;addStat('根基',1);addStat('神識',1);addTitle('著書立說');save();cur.msg='心得已寫下，修為 +'+XP.journal+'。請長老檢查並給你印記。';cur.msgType='ok';renderRegion();return;}
-  if(kind==='seal'){const code=(fd.get('code')||'').trim().toUpperCase();
-    if(code===n.code){breakthrough(cur.i);}else{cur.msg='印記不符，請向長老確認。';cur.msgType='bad';renderRegion();}return;}
+    S.notes[n.id+'.journal']=v;S.xp+=XP.journal;addStat('根基',1);addStat('神識',1);addTitle('著書立說');save();breakthrough(cur.i);return;}
+  if(kind==='seal'){breakthrough(cur.i);return;}
   if(kind==='trial'){const q=n.quests.find(x=>x.id===cur.trial.q),tr=cur.trial;
     tr.vals=tr.cases.map((c,k)=>q.out.map((_,j)=>fd.get(`c${k}_${j}`)));
     tr.res=tr.cases.map((c,k)=>c.out.every((ex,j)=>same(ex,tr.vals[k][j])));
@@ -868,17 +867,15 @@ function showHelp(){cur=null;
   <li>在右邊「自行測試」輸入資料（用空白隔開），按「▶ 執行」看輸出。</li>
   <li>覺得對了就按「⚔ 自動試煉」，網站會自動出題檢查，全對就破陣。同一區的積木會自動保存。</li>
   <li>主線 → 支線 → 斬心魔。心魔最愛邊界值和奇怪的輸入，記得自己先測。</li>
-  <li>斬完心魔寫「修行心得」，請老師檢查後給你「長老印記」，就能突破境界。</li>
+  <li>斬完心魔寫「修行心得」，按「確定」就直接突破境界。</li>
   </ol>
   <p class="sub">境界：${THEME.realms.join(' → ')}。過了第六區後要通過宗門大比（對應縣賽）。這一版開放前三區。</p>
   <p class="sub">小提示和師尊錦囊都免費。真的卡住，在修煉室按「⚡ 快速解答」，參考答案會直接放進積木區，按「⚔ 自動試煉」就能過關，再回頭看每個積木在做什麼。</p>`);
 }
 function showElder(){cur=null;
-  showPanel(`<h2>長老專區</h2><p class="sub">學生斬完心魔、寫好修行心得後，請檢查作品再給印記。</p>
-  <table><thead><tr><th>區域</th><th>突破境界</th><th>長老印記</th></tr></thead><tbody>
-  ${NODES.filter(n=>n.impl).map(n=>`<tr><td>${n.name}</td><td>${n.realm}</td><td><b>${n.code}</b></td></tr>`).join('')}</tbody></table>
+  showPanel(`<h2>長老專區</h2><p class="sub">學生斬完心魔、寫好修行心得後，會自動突破境界，不需要老師給印記。想檢查學生的進度，可以請學生打開「存檔」或看他的心得。</p>
   <h3>班級使用建議</h3><ul><li>一般班級：每區做主線與前兩個支線即可，約 4–5 節。</li><li>培訓班：做完整三區（含斬心魔），奇遇當作進階或回家練習，約 8–9 節。</li><li>每區結束後，請學生到<a href="https://ilanictexam.pages.dev/" target="_blank" rel="noopener">比賽平台</a>做「競賽對照」裡的同類題，熟悉評分方式。</li></ul>
-  <p class="sub" style="margin-top:12px">建議檢查：程式能處理邊界值、變數名稱清楚、心得三欄都有寫。這一版的印記寫在網頁程式裡，懂得看原始碼的學生找得到；正式使用時建議每學期更換。</p>`);
+  <p class="sub" style="margin-top:12px">巡堂時可以看：程式能處理邊界值、變數名稱清楚、心得三欄都有寫。</p>`);
 }
 const ENT=s=>[...String(s)].map(c=>'&#'+c.codePointAt(0)+';').join('');
 function worldCards(){return `<div class="worlds">${Object.values(THEMES).map(t=>`<button type="button" class="world ${t.id===THEME_ID?'on':''}" data-act="world" data-world="${t.id}"><b>${ENT(t.title)}</b><span>${ENT(t.label)}</span><small>${ENT(t.tag)}</small>${t.id===THEME_ID?'<em>目前所在</em>':''}</button>`).join('')}</div>`;}
