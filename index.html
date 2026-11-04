@@ -261,6 +261,7 @@ details.tip div{margin-top:4px;padding:6px 10px;border-left:3px solid var(--jade
 <div id="burst"><div class="big" id="burstBig"></div><div class="small" id="burstSmall"></div><div class="row" style="justify-content:center"><button class="btn" id="burstOk">繼續修行</button></div></div>
 
 <script src="lib/music.js?v=3"></script>
+<script src="lib/mini.js?v=1"></script>
 <script>
 /* ===================== 世界觀（版本）設定 ===================== */
 const THEMES={
@@ -309,6 +310,7 @@ const THEMES={
    ['偽卷心魔','偽卷魔物'],['亂評心魔','亂評魔物'],['偽票心魔','偽票魔物'],['作弊心魔','作弊魔物'],['零與負數心魔','零與負數魔物'],['方陣心魔','方陣魔物'],
    ['天道方陣','星輝方陣'],['經卷','魔法書卷'],['偽卷','偽造書卷'],['弟子','學徒'],
    ['改造法器','改造魔法'],['法器','魔法'],['宗主','校長'],['演武場','決鬥場'],['比武','魔法決鬥'],
+   ['靈兵大道','魔像大道'],['心魔城','魔物城堡'],['靈兵','魔像'],
    ['坊市','魔法市集'],['初入仙途','新生入學'],['降魔使','魔物獵人'],['不求錦囊','無需秘訣'],['著書立說','博學之士'],['三境貫通','三階連升'],
    ['神識','洞察'],['根基','構築'],['悟性','智慧'],['氣度','魅力'],['功力','魔力'],
    ['初期','起步'],['中期','進步中'],['後期','即將晉升'],['下山歷練','走訪浮島'],['修行任務','魔法任務'],['修行','學習'],['修煉','練習']
@@ -1018,7 +1020,7 @@ function ictHTML(rid){const L=ICT[rid];if(!L)return'';
 
 /* ===================== 進度存檔 ===================== */
 const SAVE='suanyan-v1';
-const fresh=()=>({name:'',xp:0,cleared:[],quests:{},stats:Object.fromEntries(STATS.map(s=>[s,0])),titles:[],hints:{},notes:{},seen:{},pos:0});
+const fresh=()=>({name:'',xp:0,cleared:[],quests:{},stats:Object.fromEntries(STATS.map(s=>[s,0])),titles:[],hints:{},notes:{},seen:{},pos:0,mini:{}});
 let S;
 try{S=JSON.parse(localStorage.getItem(SAVE))||fresh();}catch(e){S=fresh();}
 S=Object.assign(fresh(),S);S.theme=THEME_ID;
@@ -1122,7 +1124,7 @@ function renderRegion(){
         else{h+=`<p class="sub">心得已寫好，可以突破境界了。</p>
           <form data-form="seal" class="row"><button class="btn" type="submit">突破境界</button></form>`;}
       }
-      h+=ictHTML(n.id)+`<div class="row"><button class="btn ghost small" data-act="replay">重看對話</button></div>`;
+      h+=ictHTML(n.id)+`<div class="row"><button class="btn ghost small" data-act="replay">重看對話</button>${n.quests.some(q=>S.quests[q.id])?'<button class="btn small quick" data-act="mini">🎮 小遊戲：靈兵大道</button>':''}</div>`;
     }
   }
   showPanel(h);
@@ -1269,6 +1271,7 @@ pn.addEventListener('click',e=>{
   else if(a==='tab'){const tr=cur.trial,q=n.quests.find(x=>x.id===tr.q),f=pn.querySelector('form[data-form=trial]');
     if(f){const fd=new FormData(f);tr.vals=tr.cases.map((c,k)=>q.out.map((_,j)=>fd.get(`c${k}_${j}`)));}tr.tab=b.dataset.tab;renderRegion();}
   else if(a==='board'){cur.view='board';cur.trial=null;renderRegion();}
+  else if(a==='mini'){openMini(n);}
 });
 document.querySelector('nav').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;
   ({char:showChar,scrolls:showScrolls,help:showHelp,world:showWorlds,savep:showSave,music:toggleMusic})[b.dataset.act]();});
@@ -1377,6 +1380,10 @@ function forgeRun(){
   fgEl('fgOut').textContent=(sn?'⚠ '+sn+'\n':'')+(t||MX('（沒有輸出）'));
   const b=fgEl('fgBubble');b.textContent=r.says.length?r.says[r.says.length-1]:'';b.hidden=!r.says.length;showVars(r.vars);
 }
+/* 小遊戲：靈兵大道。區域越後面，門上的積木越進階（加減乘 → 除法、如果 → 重複 → 餘數） */
+function openMini(n){if(!window.MiniGame)return;const i=NODES.indexOf(n);
+  MiniGame.open({tier:i<=0?0:i===1?1:i===2?2:3,unit:TX('靈兵'),enemy:TX('心魔城'),gold:TX('靈石'),title:TX('靈兵大道・'+n.name),
+    onEnd:r=>{SFX(r.win?'win':'bad');if(r.win&&!S.mini[n.id]){S.mini[n.id]=1;S.xp+=20;save();updateHud();return TX('首次攻下「'+n.name+'」的心魔城：修為 +20');}return false;}});}
 /* 快速解答：把參考答案直接放進積木區（原本的積木會被取代） */
 function quickAnswer(){
   if(!window.Forge||!Forge.ready||!FG.q)return;const q=FG.q,G=GUIDE[q.id];if(!G||!G.answer)return;
@@ -1403,7 +1410,7 @@ function forgeTest(){
     else if(!good&&/,/.test(r.output))notes.add('輸出裡有逗號：比賽的答案是用空格隔開，不是逗號。');
     rows.push(`<tr><td>${q.in.map((l,j)=>c.in[j]===undefined?'':`${l} <b>${esc(c.in[j])}</b>`).filter(Boolean).join('<br>')}</td><td>${esc(exp)}</td><td>${r.timedOut?'（執行超時）':r.error?'（執行錯誤）':esc(r.output||'（沒有輸出）')}</td><td class="mark ${good?'ok':'bad'}">${good?'✓':'✗'}</td></tr>`);});
   let h=`<table><thead><tr><th>輸入</th><th>正確輸出</th><th>你的輸出</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
-  if(ok===cases.length){SFX('ok');const first=complete(n,q);h+=`<div class="msg ok">破陣成功！「${q.title}」完成${first?`，修為 +${XP[q.type]}`:'（已熟練）'}。${first&&q.type==='main'?'<br>習得'+n.scroll.title+'。':''}</div><div class="row"><button class="btn" data-fg="back">返回任務</button></div>`;updateHud();}
+  if(ok===cases.length){SFX('ok');const first=complete(n,q);h+=`<div class="msg ok">破陣成功！「${q.title}」完成${first?`，修為 +${XP[q.type]}`:'（已熟練）'}。${first&&q.type==='main'?'<br>習得'+n.scroll.title+'。':''}</div><div class="row"><button class="btn" data-fg="back">返回任務</button><button class="btn quick" data-fg="mini">🎮 休息一下：靈兵大道</button></div>`;updateHud();}
   else{SFX('bad');h+=`<div class="msg bad">答對 ${ok} / ${cases.length} 組。${[...notes].join('')||'看看打 ✗ 的那幾組，是不是邊界值或特殊情況沒處理？'}<br>可以打開左邊的「小提示」。</div>`;}
   box.innerHTML=TX(MX(h));}finally{FG.busy=false;}
 }
@@ -1413,6 +1420,7 @@ fgEl('forge').addEventListener('click',e=>{
     fgEl('fgGuide').innerHTML=TX(guideHTML(q,true));renderSnips(fgEl('fgGuide'));return;}
   const a=b.dataset.fg;
   if(a==='quick'){quickAnswer();return;}
+  if(a==='mini'){openMini(FG.n);return;}
   if(a==='back')closeForge();
   else if(a==='go')forgeRun();
   else if(a==='mode')setMode(b.dataset.m);
