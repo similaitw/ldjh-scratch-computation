@@ -268,8 +268,8 @@ details.tip div{margin-top:4px;padding:6px 10px;border-left:3px solid var(--jade
 <div id="toast"></div>
 <div id="burst"><div class="big" id="burstBig"></div><div class="small" id="burstSmall"></div><div class="row" style="justify-content:center"><button class="btn" id="burstOk">繼續修行</button></div></div>
 
-<script src="lib/music.js?v=4"></script>
-<script src="lib/mini.js?v=8"></script>
+<script src="lib/music.js?v=5"></script>
+<script src="lib/mini.js?v=9"></script>
 <script>
 /* ===================== 世界觀（版本）設定 ===================== */
 const THEMES={
@@ -1476,7 +1476,7 @@ function forgeRun(){
 /* 小遊戲：御劍斬魔（射擊闖關，純放鬆） */
 function openMini(n){if(!window.MiniGame)return;
   if(!S.miniSave)S.miniSave={lv:1,gold:0,up:0};
-  MiniGame.open({title:TX('御劍斬魔・'+n.name),enemy:TX('心魔'),gold:TX('靈石'),shot:TX('劍氣'),skill:TX('萬劍歸宗'),boss:TX('大魔頭'),save:S.miniSave,tickets:()=>S.miniTickets||0,usePlay:()=>{if((S.miniTickets||0)<=0)return false;S.miniTickets--;save();return true;},
+  MiniGame.open({theme:THEME_ID,title:TX('御劍斬魔・'+n.name),enemy:TX('心魔'),gold:TX('靈石'),shot:TX('劍氣'),skill:TX('萬劍歸宗'),boss:TX('大魔頭'),save:S.miniSave,tickets:()=>S.miniTickets||0,usePlay:()=>{if((S.miniTickets||0)<=0)return false;S.miniTickets--;save();return true;},
     onSave:sv=>{S.miniSave=sv;save();},
     onEnd:r=>{SFX(r.win?'win':'bad');if(r.win&&!S.mini[n.id]){S.mini[n.id]=1;S.xp+=20;save();updateHud();return TX('第一次在「'+n.name+'」斬魔成功：修為 +20');}return false;}});}
 const ANS_TRIES=3;
