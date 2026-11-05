@@ -268,8 +268,8 @@ details.tip div{margin-top:4px;padding:6px 10px;border-left:3px solid var(--jade
 <div id="toast"></div>
 <div id="burst"><div class="big" id="burstBig"></div><div class="small" id="burstSmall"></div><div class="row" style="justify-content:center"><button class="btn" id="burstOk">繼續修行</button></div></div>
 
-<script src="lib/music.js?v=3"></script>
-<script src="lib/mini.js?v=7"></script>
+<script src="lib/music.js?v=4"></script>
+<script src="lib/mini.js?v=8"></script>
 <script>
 /* ===================== 世界觀（版本）設定 ===================== */
 const THEMES={
@@ -1177,7 +1177,7 @@ function renderRegion(){
     const ord=S.notes[n.id+'.order'];
     if(!ord){
       const ex=ORDER_EX[n.id]||ORDER_EX.r1;
-      h+=`<h3>第一步：填寫委託符</h3><p class="sub">動手寫程式前，先想清楚三件事：輸入什麼、怎麼算、輸出什麼。下面已經幫你寫好提示，看一看就可以直接按「確定」；想用自己的話改寫也可以。完成可得修為 ${XP.order}、神識 +1。</p>
+      h+=`<h3>第一步：填寫委託符</h3><p class="sub">動手寫程式前，先想清楚三件事：輸入什麼、怎麼算、輸出什麼。下面已經幫你寫好提示，看一看就可以直接按「確定」；想用自己的話改寫也可以。完成可得修為 ${XP.order}、神識 +1，還送 3 張遊戲券 🎟。</p>
       <form data-form="order">
       <div class="field"><label>使用者會輸入什麼？</label><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" name="i" value="${ex[0]}"></div>
       <div class="field"><label>程式要怎麼處理？</label><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" name="p" value="${ex[1]}"></div>
@@ -1322,7 +1322,7 @@ pn.addEventListener('submit',e=>{
     toast('歡迎拜入算衍宗，'+S.name+'！先到「坊市」接第一個委託。');return;}
   const n=cur&&NODES[cur.i];if(!n)return;
   if(kind==='order'){const ex=ORDER_EX[n.id]||ORDER_EX.r1;const v={i:fd.get('i').trim()||ex[0],p:fd.get('p').trim()||ex[1],o:fd.get('o').trim()||ex[2]};
-    S.notes[n.id+'.order']=v;S.xp+=XP.order;addStat('神識',1);save();cur.msg='委託符已封存，修為 +'+XP.order+'、神識 +1。開始主線吧！';cur.msgType='ok';renderRegion();return;}
+    S.notes[n.id+'.order']=v;S.xp+=XP.order;S.miniTickets=(S.miniTickets||0)+3;addStat('神識',1);save();cur.msg='任務單寫好了！經驗值 +'+XP.order+'，再送你 3 張遊戲券 🎟。開始第一題吧！';cur.msgType='ok';renderRegion();return;}
   if(kind==='journal'){const je=JOURNAL_EX[n.id]||JOURNAL_EX.r1;const v={v:fd.get('v').trim()||je[0],f:fd.get('f').trim()||je[1],t:fd.get('t').trim()||je[2]};
     S.notes[n.id+'.journal']=v;S.xp+=XP.journal;addStat('根基',1);addStat('神識',1);addTitle('著書立說');save();breakthrough(cur.i);return;}
   if(kind==='seal'){breakthrough(cur.i);return;}
@@ -1398,13 +1398,13 @@ function showHelp(){cur=null;
   <ul><li>先點「小提示」看提示。</li><li>還是不會，按上方的「<b>🧩 給我積木零件</b>」：要用的積木會全部拿出來，但被拆開打亂了，你只要把它們接對位置。</li><li>同一題按「自動檢查」沒過 3 次以後，就可以打開「完整答案」對照。</li></ul>
   <h3>其他</h3>
   <ul><li>題目種類：<b>主題</b>（新觀念）→ <b>練習</b> → <b>魔王關</b> → <b>加分題</b>（可以不做）。</li>
-  <li>每過一題新的題目，送 1 張遊戲券，可以玩一局小遊戲「御劍斬魔」。同一題重做不會再送。</li>
+  <li>小遊戲「御劍斬魔」要用遊戲券：每到一個新區域、寫完任務單就送 3 張；之後每過一題新的再送 1 張（同一題重做不會再送）。一局用 1 張。</li>
   <li>電腦教室關機會清掉進度，下課前記得按上方的「<b>存檔</b>」。</li>
   <li>等級：${THEME.realms.join(' → ')}。第七區像縣賽的模擬考。</li></ul>`);
 }
 function showElder(){cur=null;
   showPanel(`<h2>長老專區</h2><p class="sub">學生斬完心魔、寫好修行心得後，會自動突破境界，不需要老師給印記。想檢查學生的進度，可以請學生打開「存檔」或看他的心得。</p>
-  <h3>班級使用建議</h3><ul><li>一般班級：前三區（變數、條件、迴圈）每區做主線與前兩個支線即可，約 4–5 節。</li><li>培訓班：九區依序做完（含斬心魔），每區約 2–3 節；第七區「宗門大比」可以當作縣賽前的模擬。奇遇當作進階或回家練習。</li><li>小遊戲「御劍斬魔」要用遊戲券：每一題第一次過關送 1 張，一局用 1 張，所以玩的次數不會超過寫完的題數。</li><li>卡關的學生可以按「🧩 給我積木零件」：需要的積木都會給，但被拆開打亂，要自己組合。同一題自動檢查沒過 3 次後，才能看完整答案。</li><li>每區結束後，請學生到<a href="https://ilanictexam.pages.dev/" target="_blank" rel="noopener">比賽平台</a>做「競賽對照」裡的同類題，熟悉評分方式。</li></ul>
+  <h3>班級使用建議</h3><ul><li>一般班級：前三區（變數、條件、迴圈）每區做主線與前兩個支線即可，約 4–5 節。</li><li>培訓班：九區依序做完（含斬心魔），每區約 2–3 節；第七區「宗門大比」可以當作縣賽前的模擬。奇遇當作進階或回家練習。</li><li>小遊戲「御劍斬魔」要用遊戲券：每區寫完任務單送 3 張，每一題第一次過關再送 1 張，一局用 1 張。整個遊戲最多約 82 局。</li><li>卡關的學生可以按「🧩 給我積木零件」：需要的積木都會給，但被拆開打亂，要自己組合。同一題自動檢查沒過 3 次後，才能看完整答案。</li><li>每區結束後，請學生到<a href="https://ilanictexam.pages.dev/" target="_blank" rel="noopener">比賽平台</a>做「競賽對照」裡的同類題，熟悉評分方式。</li></ul>
   <p class="sub" style="margin-top:12px">巡堂時可以看：程式能處理邊界值、變數名稱清楚、心得三欄都有寫。</p>`);
 }
 const ENT=s=>[...String(s)].map(c=>'&#'+c.codePointAt(0)+';').join('');
