@@ -261,7 +261,7 @@ details.tip div{margin-top:4px;padding:6px 10px;border-left:3px solid var(--jade
 <div id="burst"><div class="big" id="burstBig"></div><div class="small" id="burstSmall"></div><div class="row" style="justify-content:center"><button class="btn" id="burstOk">繼續修行</button></div></div>
 
 <script src="lib/music.js?v=3"></script>
-<script src="lib/mini.js?v=1"></script>
+<script src="lib/mini.js?v=4"></script>
 <script>
 /* ===================== 世界觀（版本）設定 ===================== */
 const THEMES={
@@ -1020,7 +1020,7 @@ function ictHTML(rid){const L=ICT[rid];if(!L)return'';
 
 /* ===================== 進度存檔 ===================== */
 const SAVE='suanyan-v1';
-const fresh=()=>({name:'',xp:0,cleared:[],quests:{},stats:Object.fromEntries(STATS.map(s=>[s,0])),titles:[],hints:{},notes:{},seen:{},pos:0,mini:{}});
+const fresh=()=>({name:'',xp:0,cleared:[],quests:{},stats:Object.fromEntries(STATS.map(s=>[s,0])),titles:[],hints:{},notes:{},seen:{},pos:0,mini:{},miniSave:{lv:1,gold:0,up:0}});
 let S;
 try{S=JSON.parse(localStorage.getItem(SAVE))||fresh();}catch(e){S=fresh();}
 S=Object.assign(fresh(),S);S.theme=THEME_ID;
@@ -1382,8 +1382,10 @@ function forgeRun(){
 }
 /* 小遊戲：靈兵大道。區域越後面，門上的積木越進階（加減乘 → 除法、如果 → 重複 → 餘數） */
 function openMini(n){if(!window.MiniGame)return;const i=NODES.indexOf(n);
-  MiniGame.open({tier:i<=0?0:i===1?1:i===2?2:3,unit:TX('靈兵'),enemy:TX('心魔城'),gold:TX('靈石'),title:TX('靈兵大道・'+n.name),
-    onEnd:r=>{SFX(r.win?'win':'bad');if(r.win&&!S.mini[n.id]){S.mini[n.id]=1;S.xp+=20;save();updateHud();return TX('首次攻下「'+n.name+'」的心魔城：修為 +20');}return false;}});}
+  if(!S.miniSave)S.miniSave={lv:1,gold:0,up:0};
+  MiniGame.open({tier:i<=0?0:i===1?1:i===2?2:3,unit:TX('靈兵'),enemy:TX('心魔城'),gold:TX('靈石'),title:TX('靈兵大道・'+n.name),save:S.miniSave,
+    onSave:sv=>{S.miniSave=sv;save();},
+    onEnd:r=>{SFX(r.win?'win':'bad');if(r.win&&!S.mini[n.id]){S.mini[n.id]=1;S.xp+=20;save();updateHud();return TX('第一次在「'+n.name+'」攻下心魔城：修為 +20');}return false;}});}
 /* 快速解答：把參考答案直接放進積木區（原本的積木會被取代） */
 function quickAnswer(){
   if(!window.Forge||!Forge.ready||!FG.q)return;const q=FG.q,G=GUIDE[q.id];if(!G||!G.answer)return;
