@@ -240,7 +240,7 @@ details.tip div{margin-top:4px;padding:6px 10px;border-left:3px solid var(--jade
     <div class="modesw" role="group" aria-label="積木模式"><button type="button" data-fg="mode" data-m="Scratch">Scratch</button><button type="button" data-fg="mode" data-m="Blockly">Blockly</button></div>
     <button class="btn small ghost musicbtn" data-fg="music" title="背景音樂開關">♪</button>
     <button class="btn small ghost" data-fg="xml" title="下載後可在比賽平台按「上傳 XML」載入">下載 XML</button>
-    <button class="btn small quick" data-fg="quick" title="把參考答案直接放進積木區">⚡ 快速解答</button>
+    <button class="btn small quick" data-fg="quick" title="把這題要用的積木拆開放進積木區，自己組合">🧩 給我積木零件</button>
     <button class="btn small ghost" data-fg="guide">步驟與提示</button>
     <button class="btn small ghost" data-fg="back">返回任務</button>
   </div>
@@ -1100,7 +1100,7 @@ function ictHTML(rid){const L=ICT[rid];if(!L)return'';
 
 /* ===================== 進度存檔 ===================== */
 const SAVE='suanyan-v1';
-const fresh=()=>({name:'',xp:0,cleared:[],quests:{},stats:Object.fromEntries(STATS.map(s=>[s,0])),titles:[],hints:{},notes:{},seen:{},pos:0,mini:{},miniSave:{lv:1,gold:0,up:0}});
+const fresh=()=>({name:'',xp:0,cleared:[],quests:{},stats:Object.fromEntries(STATS.map(s=>[s,0])),titles:[],hints:{},notes:{},seen:{},pos:0,tries:{},mini:{},miniSave:{lv:1,gold:0,up:0}});
 let S;
 try{S=JSON.parse(localStorage.getItem(SAVE))||fresh();}catch(e){S=fresh();}
 S=Object.assign(fresh(),S);S.theme=THEME_ID;
@@ -1256,10 +1256,13 @@ function guideHTML(q,withHead){
   if(qk>0)h+=`<div class="msg info" style="margin-top:10px">接著上一題往下做：修煉室已保留你之前的積木和變數，只要照下面的步驟修改、加上新的部分。</div>`;
   h+=`<p class="sub" style="margin-top:10px">照下面的步驟拼積木，卡住就點「小提示」。</p><ol class="steps">`;
   G.steps.filter(st=>!st.only||st.only===MODE).forEach(st=>{h+=`<li><div>${MX(st.t)}</div>${st.b?sbBox(st.b):''}${st.tip?`<details class="tip"><summary>小提示</summary><div>${MX(st.tip)}</div></details>`:''}</li>`;});
-  h+=`</ol><h3>師尊錦囊：完整參考程式</h3>`;
-  if(opened)h+=`<p class="sub">先自己拼拼看，再對照這份參考程式。寫法不一定要完全一樣，試煉通過就可以。</p>${sbBox(G.answer)}`;
-  else h+=`<p class="sub">卡住了就打開看（免費）。</p><button type="button" class="btn ghost" data-act="answer" data-q="${q.id}">打開錦囊</button>`;
-  if(withHead)h+=`<p class="sub" style="margin-top:8px">想直接看答案怎麼運作？按「快速解答」，參考答案會直接放進積木區，再按「⚔ 自動試煉」就能過關。</p><button type="button" class="btn quick" data-fg="quick">⚡ 快速解答：直接放入答案積木</button>`;
+  h+=`</ol>`;
+  if(withHead)h+=`<h3>卡住了？先拿積木零件</h3><p class="sub">按下去，這題需要的積木會全部放進積木區，但是<b>被拆開、打亂了</b>。你要自己想：哪個先、哪個後、哪些要放進「如果」「重複」的開口裡。（原本排的積木會被換掉）</p><button type="button" class="btn quick" data-fg="quick">🧩 給我積木零件</button>`;
+  const tries=(S.tries&&S.tries[q.id])||0,need=Math.max(0,ANS_TRIES-tries);
+  h+=`<h3>師尊錦囊：完整參考程式</h3>`;
+  if(opened)h+=`<p class="sub">對照看看你的積木哪裡不一樣。寫法不一定要完全一樣，自動檢查通過就可以。</p>${sbBox(G.answer)}`;
+  else if(need>0)h+=`<p class="sub">🔒 先自己試試看！再按 <b>${need}</b> 次「自動檢查」還沒過，就能打開完整答案。</p>`;
+  else h+=`<p class="sub">你已經努力試過了，可以打開來對照。</p><button type="button" class="btn ghost" data-act="answer" data-q="${q.id}">打開錦囊</button>`;
   return h;
 }
 function renderTrial(n){
@@ -1329,7 +1332,7 @@ pn.addEventListener('submit',e=>{
     const ok=tr.res.filter(Boolean).length;
     if(ok===tr.cases.length){SFX('ok');const first=complete(n,q);
       cur.view='board';cur.msg=first?`破陣成功！「${q.title}」完成，修為 +${XP[q.type]}。`+(q.type==='main'?'習得'+n.scroll.title+'，可到「功法」查看。':''):`再次破陣成功，「${q.title}」已熟練。`;cur.msgType='ok';cur.trial=null;renderRegion();}
-    else{SFX('bad');tr.msg=`答對 ${ok} / ${tr.cases.length} 組。看看打 ✗ 的那幾組：是不是邊界值或特殊情況沒處理？可以「回去看步驟」打開小提示。`;tr.msgType='bad';renderRegion();}
+    else{if(!S.tries)S.tries={};S.tries[q.id]=(S.tries[q.id]||0)+1;save();SFX('bad');tr.msg=`答對 ${ok} / ${tr.cases.length} 組。看看打 ✗ 的那幾組：是不是邊界值或特殊情況沒處理？可以「回去看步驟」打開小提示。`;tr.msgType='bad';renderRegion();}
   }
 });
 pn.addEventListener('click',e=>{
@@ -1392,7 +1395,7 @@ function showHelp(){cur=null;
   <li><b>打完魔王關，寫學習心得</b>（也幫你寫好了），按「確定」就升級，可以去下一區。</li>
   </ol>
   <h3>卡住怎麼辦？</h3>
-  <ul><li>先點「小提示」看提示。</li><li>還是不會，按上方的「<b>⚡ 快速解答</b>」，答案積木會直接排好，按「自動檢查」就能過關，再回頭看看每個積木在做什麼。</li></ul>
+  <ul><li>先點「小提示」看提示。</li><li>還是不會，按上方的「<b>🧩 給我積木零件</b>」：要用的積木會全部拿出來，但被拆開打亂了，你只要把它們接對位置。</li><li>同一題按「自動檢查」沒過 3 次以後，就可以打開「完整答案」對照。</li></ul>
   <h3>其他</h3>
   <ul><li>題目種類：<b>主題</b>（新觀念）→ <b>練習</b> → <b>魔王關</b> → <b>加分題</b>（可以不做）。</li>
   <li>過關後可以玩小遊戲「御劍斬魔」放鬆一下。</li>
@@ -1401,7 +1404,7 @@ function showHelp(){cur=null;
 }
 function showElder(){cur=null;
   showPanel(`<h2>長老專區</h2><p class="sub">學生斬完心魔、寫好修行心得後，會自動突破境界，不需要老師給印記。想檢查學生的進度，可以請學生打開「存檔」或看他的心得。</p>
-  <h3>班級使用建議</h3><ul><li>一般班級：前三區（變數、條件、迴圈）每區做主線與前兩個支線即可，約 4–5 節。</li><li>培訓班：九區依序做完（含斬心魔），每區約 2–3 節；第七區「宗門大比」可以當作縣賽前的模擬。奇遇當作進階或回家練習。</li><li>卡關太久的學生可以按「⚡ 快速解答」直接看答案，再回頭理解每個積木。</li><li>每區結束後，請學生到<a href="https://ilanictexam.pages.dev/" target="_blank" rel="noopener">比賽平台</a>做「競賽對照」裡的同類題，熟悉評分方式。</li></ul>
+  <h3>班級使用建議</h3><ul><li>一般班級：前三區（變數、條件、迴圈）每區做主線與前兩個支線即可，約 4–5 節。</li><li>培訓班：九區依序做完（含斬心魔），每區約 2–3 節；第七區「宗門大比」可以當作縣賽前的模擬。奇遇當作進階或回家練習。</li><li>卡關的學生可以按「🧩 給我積木零件」：需要的積木都會給，但被拆開打亂，要自己組合。同一題自動檢查沒過 3 次後，才能看完整答案。</li><li>每區結束後，請學生到<a href="https://ilanictexam.pages.dev/" target="_blank" rel="noopener">比賽平台</a>做「競賽對照」裡的同類題，熟悉評分方式。</li></ul>
   <p class="sub" style="margin-top:12px">巡堂時可以看：程式能處理邊界值、變數名稱清楚、心得三欄都有寫。</p>`);
 }
 const ENT=s=>[...String(s)].map(c=>'&#'+c.codePointAt(0)+';').join('');
@@ -1476,7 +1479,32 @@ function openMini(n){if(!window.MiniGame)return;
   MiniGame.open({title:TX('御劍斬魔・'+n.name),enemy:TX('心魔'),gold:TX('靈石'),shot:TX('劍氣'),skill:TX('萬劍歸宗'),boss:TX('大魔頭'),save:S.miniSave,
     onSave:sv=>{S.miniSave=sv;save();},
     onEnd:r=>{SFX(r.win?'win':'bad');if(r.win&&!S.mini[n.id]){S.mini[n.id]=1;S.xp+=20;save();updateHud();return TX('第一次在「'+n.name+'」斬魔成功：修為 +20');}return false;}});}
-/* 快速解答：把參考答案直接放進積木區（原本的積木會被取代） */
+const ANS_TRIES=3;
+/* 積木零件：把參考答案的積木全部拆開、打亂，放進積木區，讓學生自己組合 */
+function quickParts(){
+  if(!window.Forge||!Forge.ready||!FG.q)return;const q=FG.q,G=GUIDE[q.id];if(!G||!G.answer)return;
+  let tops;try{tops=BDSL.parse(G.answer);}catch(e){console.error(e);toast('積木載入失敗。');return;}
+  Forge.load(JSON.stringify({blocks:{languageVersion:0,blocks:tops}}));
+  setTimeout(()=>{const ws=Forge.ws;Forge.loading=true;
+    try{Blockly.Events.disable();
+      const stm=ws.getAllBlocks(true).filter(b=>b.previousConnection&&b.getParent());
+      stm.forEach(b=>{if(b.getParent())b.unplug(false);});
+      try{Blockly.renderManagement.triggerQueuedRenders(ws);}catch(e){}
+      const hat=ws.getTopBlocks(false).find(b=>b.type==='event_whenflagclicked');
+      const pieces=ws.getTopBlocks(false).filter(b=>b!==hat);
+      for(let i=pieces.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pieces[i],pieces[j]]=[pieces[j],pieces[i]];}
+      const place=(b,x,y)=>{const p=b.getRelativeToSurfaceXY();b.moveBy(x-p.x,y-p.y);};
+      let y=20;if(hat){place(hat,20,y);y+=hat.getHeightWidth().height+34;}
+      pieces.forEach((b,k)=>{place(b,20+(k%3)*36,y);y+=b.getHeightWidth().height+20;});
+    }finally{Blockly.Events.enable();Forge.loading=false;}
+    Blockly.svgResize(ws);ws.zoomToFit();if(ws.scale<.6)ws.setScale(.6);if(ws.scale>.9)ws.setScale(.9);
+    const bb=ws.getBlocksBoundingBox();ws.scroll(-bb.left*ws.scale+30,-bb.top*ws.scale+20);
+    try{if(FG.region)localStorage.setItem(projKey(FG.region),Forge.json());}catch(e){}
+  },60);
+  fgEl('fgResult').innerHTML='';fgEl('fgOut').textContent='（還沒執行）';
+  toast('這題要用的積木都拿出來了，但被拆開打亂了！把它們接起來，再按「自動檢查」。');
+}
+/* 完整答案直接放進積木區（教師測試用，學生畫面沒有這個按鈕） */
 function quickAnswer(){
   if(!window.Forge||!Forge.ready||!FG.q)return;const q=FG.q,G=GUIDE[q.id];if(!G||!G.answer)return;
   let tops;try{tops=BDSL.parse(G.answer);}catch(e){console.error(e);toast('解答載入失敗。');return;}
@@ -1503,7 +1531,8 @@ function forgeTest(){
     rows.push(`<tr><td>${q.in.map((l,j)=>c.in[j]===undefined?'':`${l} <b>${esc(c.in[j])}</b>`).filter(Boolean).join('<br>')}</td><td>${esc(exp)}</td><td>${r.timedOut?'（執行超時）':r.error?'（執行錯誤）':esc(r.output||'（沒有輸出）')}</td><td class="mark ${good?'ok':'bad'}">${good?'✓':'✗'}</td></tr>`);});
   let h=`<table><thead><tr><th>輸入</th><th>正確輸出</th><th>你的輸出</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
   if(ok===cases.length){SFX('ok');const first=complete(n,q);h+=`<div class="msg ok">破陣成功！「${q.title}」完成${first?`，修為 +${XP[q.type]}`:'（已熟練）'}。${first&&q.type==='main'?'<br>習得'+n.scroll.title+'。':''}</div><div class="row"><button class="btn" data-fg="back">返回任務</button><button class="btn quick" data-fg="mini">🎮 休息一下：御劍斬魔</button></div>`;updateHud();}
-  else{SFX('bad');h+=`<div class="msg bad">答對 ${ok} / ${cases.length} 組。${[...notes].join('')||'看看打 ✗ 的那幾組，是不是邊界值或特殊情況沒處理？'}<br>可以打開左邊的「小提示」。</div>`;}
+  else{if(!S.tries)S.tries={};S.tries[q.id]=(S.tries[q.id]||0)+1;save();if(S.tries[q.id]===ANS_TRIES&&!S.hints[q.id]){fgEl('fgGuide').innerHTML=TX(guideHTML(q,true));renderSnips(fgEl('fgGuide'));}
+    SFX('bad');h+=`<div class="msg bad">答對 ${ok} / ${cases.length} 組。${[...notes].join('')||'看看打 ✗ 的那幾組，是不是邊界值或特殊情況沒處理？'}<br>可以打開左邊的「小提示」。</div>`;}
   box.innerHTML=TX(MX(h));}finally{FG.busy=false;}
 }
 fgEl('forge').addEventListener('click',e=>{
@@ -1511,7 +1540,7 @@ fgEl('forge').addEventListener('click',e=>{
   if(b.dataset.act==='answer'){const q=FG.q;if(S.hints[q.id])return;S.xp=Math.max(0,S.xp-ansCost(q));S.hints[q.id]=true;save();updateHud();
     fgEl('fgGuide').innerHTML=TX(guideHTML(q,true));renderSnips(fgEl('fgGuide'));return;}
   const a=b.dataset.fg;
-  if(a==='quick'){quickAnswer();return;}
+  if(a==='quick'){quickParts();return;}
   if(a==='mini'){openMini(FG.n);return;}
   if(a==='back')closeForge();
   else if(a==='go')forgeRun();
