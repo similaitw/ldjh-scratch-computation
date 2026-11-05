@@ -200,6 +200,14 @@ details.tip div{margin-top:4px;padding:6px 10px;border-left:3px solid var(--jade
 .howto{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
 .howto span{background:rgba(5,10,18,.6);border:1px solid rgba(127,224,191,.35);border-radius:999px;padding:4px 10px;font-size:.9rem}
 .tabs{display:flex;gap:6px;margin:14px 0 4px;flex-wrap:wrap}
+.helper{display:flex;gap:10px;align-items:flex-start;margin:4px 0 10px}
+.hava{flex:none;width:46px;height:46px;border-radius:50%;background:rgba(255,230,168,.15);border:2px solid #ffd06b;display:flex;align-items:center;justify-content:center}
+.hava svg{width:38px;height:38px}
+.hbub{position:relative;flex:1;background:#fff8e3;color:#3a2a08;border-radius:12px;padding:8px 12px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.hbub::before{content:'';position:absolute;left:-8px;top:14px;border:8px solid transparent;border-right-color:#fff8e3;border-left:0}
+.hbub>b{display:block;font-size:.85rem;color:#9a6200}
+.hgoal{font-size:1.08rem;font-weight:700;margin:2px 0 4px;line-height:1.5}
+.hio{font-size:.85rem;color:#6b5420}
 .tabs .btn.on{background:var(--jade)}
 </style>
 </head>
@@ -244,14 +252,14 @@ details.tip div{margin-top:4px;padding:6px 10px;border-left:3px solid var(--jade
         <svg class="fg-hero" viewBox="0 0 84 110" aria-hidden="true"><ellipse cx="42" cy="104" rx="26" ry="5" fill="rgba(0,0,0,.25)"/><path d="M42 40 L68 100 L16 100 Z" fill="#f3f0e8" stroke="#c9c2b0"/><rect x="24" y="62" width="36" height="5" rx="2" fill="#3fa58c"/><path d="M60 64 q14 10 6 30" stroke="#6fe0bf" stroke-width="3" fill="none"/><circle cx="42" cy="30" r="14" fill="#f1c9a0"/><path d="M28 28 q14 -20 28 0 q-6 -8 -14 -8 q-8 0 -14 8z" fill="#1d1d22"/><circle cx="42" cy="12" r="6" fill="#1d1d22"/><circle cx="37" cy="31" r="1.6" fill="#222"/><circle cx="47" cy="31" r="1.6" fill="#222"/></svg>
       </div>
       <h4>自行測試</h4>
-      <p class="sub" style="margin:0 0 6px">和比賽平台一樣：資料用空白或換行隔開，輸入積木每用一次就依序拿一筆。</p>
+      <p class="sub" style="margin:0 0 6px">先自己打幾個數字試試看（用空白隔開），按「▶ 執行」看程式說出什麼。</p>
       <textarea id="fgIn" rows="2" autocapitalize="off" spellcheck="false" placeholder="例如：30 2"></textarea>
       <div class="row"><button class="btn" data-fg="go">▶ 執行</button></div>
       <div class="fg-log" id="fgLog"><b>輸出</b><div id="fgOut" class="fg-outtext">（還沒執行）</div></div>
       <div class="fg-vars" id="fgVars"></div>
       <h4>試煉陣法</h4>
-      <p class="sub" style="margin:0 0 8px">按下後，網站會自動出幾組測資（像比賽的評分），把所有輸出用空白接起來，逐項和答案比對。</p>
-      <button class="btn" data-fg="test">⚔ 自動試煉</button>
+      <p class="sub" style="margin:0 0 8px">覺得寫好了就按這裡：電腦會出幾組題目檢查你的程式（跟比賽評分一樣），全部答對就過關。</p>
+      <button class="btn" data-fg="test">✔ 自動檢查</button>
       <div class="fg-res" id="fgResult"></div>
     </aside>
   </div>
@@ -261,7 +269,7 @@ details.tip div{margin-top:4px;padding:6px 10px;border-left:3px solid var(--jade
 <div id="burst"><div class="big" id="burstBig"></div><div class="small" id="burstSmall"></div><div class="row" style="justify-content:center"><button class="btn" id="burstOk">繼續修行</button></div></div>
 
 <script src="lib/music.js?v=3"></script>
-<script src="lib/mini.js?v=5"></script>
+<script src="lib/mini.js?v=6"></script>
 <script>
 /* ===================== 世界觀（版本）設定 ===================== */
 const THEMES={
@@ -310,6 +318,7 @@ const THEMES={
    ['偽卷心魔','偽卷魔物'],['亂評心魔','亂評魔物'],['偽票心魔','偽票魔物'],['作弊心魔','作弊魔物'],['零與負數心魔','零與負數魔物'],['方陣心魔','方陣魔物'],
    ['天道方陣','星輝方陣'],['經卷','魔法書卷'],['偽卷','偽造書卷'],['弟子','學徒'],
    ['改造法器','改造魔法'],['法器','魔法'],['宗主','校長'],['演武場','決鬥場'],['比武','魔法決鬥'],
+   ['小幫手小算','小幫手小星'],
    ['御劍斬魔','魔杖驅魔'],['萬劍歸宗','星光爆發'],['劍氣','魔法飛彈'],['大魔頭','魔王'],
    ['坊市','魔法市集'],['初入仙途','新生入學'],['降魔使','魔物獵人'],['不求錦囊','無需秘訣'],['著書立說','博學之士'],['三境貫通','三階連升'],
    ['神識','洞察'],['根基','構築'],['悟性','智慧'],['氣度','魅力'],['功力','魔力'],
@@ -319,7 +328,15 @@ const THEMES={
 let THEME_ID='xian';
 try{const sv=JSON.parse(localStorage.getItem('suanyan-v1')||'{}');if(sv.theme&&THEMES[sv.theme])THEME_ID=sv.theme;}catch(e){}
 const THEME=THEMES[THEME_ID];
-const TX=s=>{s=String(s??'');for(const [a,b] of THEME.dict)if(s.includes(a))s=s.split(a).join(b);return s;};
+/* 白話對照：修仙術語換成學生一看就懂的說法（兩個世界都套用，先套白話再套世界觀） */
+const PLAIN=[['師尊錦囊：完整參考程式','完整答案'],['師尊錦囊','完整答案'],['打開錦囊','看完整答案'],['錦囊','完整答案'],
+ ['再次破陣成功','再次過關'],['破陣成功','過關'],['破陣','送出答案'],['試煉陣法（驗證）','自動檢查'],['試煉陣法','自動檢查'],['自動試煉','自動檢查'],['開始試煉','開始寫'],['試煉','檢查'],
+ ['委託符','任務單'],['修行心得','學習心得'],['修行任務','任務列表'],['修行指南','遊戲說明'],['修煉室','寫程式畫面'],['修為','經驗值'],
+ ['斬除心魔','打倒魔王'],['斬完心魔','打完魔王關'],['斬心魔','魔王關'],['奇遇加碼','加分題'],['奇遇','加分題'],
+ ['取回「','拿到「'],['玉簡','通關證'],['功法秘笈','學過的技巧'],['功法','技巧'],['道基','能力值'],['六項能力值','六項能力'],
+ ['突破境界','升級'],['突破！','升級！'],['已突破','已升級'],['突破','升級'],['境界','等級'],['道號','名字'],['拜入山門','開始遊戲'],['拜入算衍宗','加入算衍宗'],
+ ['推演法器','程式'],['法器','程式'],['接下委託','接下任務']];
+const TX=s=>{s=String(s??'');for(const [a,b] of PLAIN)if(s.includes(a))s=s.split(a).join(b);for(const [a,b] of THEME.dict)if(s.includes(a))s=s.split(a).join(b);return s;};
 const RL=i=>{const r=THEME.realms[i];return i===0?r:r+THEME.suffix;};
 
 /* ===================== 配樂 ===================== */
@@ -337,7 +354,7 @@ if(window.Music){Music.theme=THEME_ID;
 const REALMS=['凡人','煉氣','築基','金丹','元嬰','化神','煉虛','合體','大乘','渡劫'];
 const STATS=['神識','根基','悟性','氣度','功力','靈感'];
 const XP={order:20,main:100,side:50,extra:80,boss:150,journal:30};
-const TYPE_NAME={main:'主線',side:'支線',extra:'奇遇',boss:'斬心魔'};
+const TYPE_NAME={main:'主題',side:'練習',extra:'加分題',boss:'魔王關'};
 const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1001,6 +1018,69 @@ Object.assign(GUIDE,{
   answer:HAT(J(R9N,'將 行和 設為 重複清單(0, N)',R9LOOP('清單 行和 第 行 項設為 行和[行] + 值'),'為列表 行和 裡的每一項 總','  說出 總'))}
 });
 
+/* ===================== 小幫手：每一題用一句白話說清楚要做什麼 ===================== */
+const GOAL={
+ r1m:'讀進單價和數量，兩個相乘，說出總價。',
+ r1s1:'再多讀一個「付款」，說出要找多少錢（付款 − 總價）。',
+ r1s2:'錢不夠就說「不足」；錢夠就說出要找多少。',
+ r1s3:'把要找的錢換成 100、50、10、5、1 元各幾個，說出 5 個數字。',
+ r1b:'單價或數量小於 1、或付款是負的，就說「錯誤」；其他照上一題做。',
+ r1x:'總價滿 100 先打九折（四捨五入），再照上一題算找零。',
+ r2m:'讀進年齡，照年齡說出票價：50、80 或 100。',
+ r2s1:'年齡小於 0 或大於 150，就說「錯誤」。',
+ r2s2:'再讀星期，星期 6、7 每人多收 20。',
+ r2s3:'再讀人數，說出總價；10 人以上打八折。',
+ r2b:'年齡、星期、人數只要有一個不合理，就說「錯誤」；否則說出總價。',
+ r2x:'再讀一個「是」或「否」（會員），會員再打九折（四捨五入）。',
+ r3m:'讀每月存多少、存幾個月，用「重複」加起來，說出總共存多少。',
+ r3s1:'每個月都比上個月多存一點，說出總共存多少。',
+ r3s2:'每存完一個月，就說出目前一共存了多少。',
+ r3s3:'最後扣掉一筆花費，只說出剩下多少。',
+ r3s4:'改成讀「目標」，說出第幾個月存到目標。',
+ r3b:'每月存 0、又不會越存越多，就說「無法達成」；不然說出第幾個月存到。',
+ r3x:'存到目標之前，每個月都說出目前存了多少。',
+ r4m:'先讀有幾卷，再一卷一卷讀頁數，說出全部加起來幾頁。',
+ r4s1:'改成說出平均一卷幾頁（四捨五入）。',
+ r4s2:'改成說出最多和最少的頁數。',
+ r4s3:'改成數一數：100 頁以上的有幾卷。',
+ r4b:'頁數小於 1 的不算；說出總頁數、最多、最少；一卷都沒有就說「無資料」。',
+ r4x:'數出 100 頁以上的卷，「連續」最多有幾卷。',
+ r5m:'把成績存進清單，再讀一個號碼，說出那個人的成績。',
+ r5s1:'說出那個人是第幾名（比他高的人數 + 1）。',
+ r5s2:'說出最高的三個分數，從高排到低。',
+ r5s3:'說出有幾個人的成績比平均高。',
+ r5b:'去掉不合理的分數，再去掉最高和最低，說出平均。',
+ r5x:'說出出現最多次的分數。',
+ r6m:'讀一段代號（文字），說出它有幾個字。',
+ r6s1:'把代號倒過來說出。',
+ r6s2:'倒過來和原本一樣，就說「是」；不一樣說「否」。',
+ r6s3:'代號都是數字，把每一位加起來說出。',
+ r6b:'代號裡有不是數字的字，就說「錯誤」；否則說出數字的和。',
+ r6x:'把數字和再一直加到剩一位數，說出那個數。',
+ r7m:'每個人有 3 個分數，依序說出每個人的總分。',
+ r7s1:'說出總分最高的是幾號。',
+ r7s2:'說出第一名是幾號，再說出 180 分以上有幾人。',
+ r7s3:'說出第 1 名和第 2 名的號碼。',
+ r7b:'有分數不合理的人不能排名；說出第 1、2 名，沒有人就說「從缺」。',
+ r7x:'說出第 1、2、3 名的號碼。',
+ r8m:'讀一個數，從小到大說出它所有的因數。',
+ r8s1:'因數剛好 2 個就說「質數」，不然說「不是」。',
+ r8s2:'讀起點和終點，說出中間有幾個質數。',
+ r8s3:'讀兩個數，用輾轉相除法說出最大公因數。',
+ r8b:'數字可能是 0 或負數；兩個都是 0 說「錯誤」，否則說出最大公因數。',
+ r8x:'說出最大公因數，再說出最小公倍數。',
+ r9m:'讀進 N×N 的方格數字，說出左上到右下那條斜線的和。',
+ r9s1:'兩條斜線都加起來（正中間那格只算一次）。',
+ r9s2:'依序說出每一列（橫的）的和。',
+ r9s3:'說出哪一列（橫的）的和最大。',
+ r9b:'每一列、每一行、兩條斜線的和全部一樣就說「是」，否則說「否」。',
+ r9x:'依序說出每一行（直的）的和。'};
+const HELPER='小算';
+const helperSay=t=>`<div class="helper"><div class="hava" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="20" cy="22" r="15" fill="#ffe6a8"/><path d="M8 14 L12 4 L17 12Z M32 14 L28 4 L23 12Z" fill="#ffd06b"/><circle cx="15" cy="21" r="2.2" fill="#222"/><circle cx="25" cy="21" r="2.2" fill="#222"/><path d="M16 27 q4 3 8 0" stroke="#222" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div><div class="hbub"><div class="hgoal" style="font-weight:500">${t}</div></div></div>`;
+function helperHTML(q){const g=GOAL[q.id]||'';
+  return `<div class="helper"><div class="hava" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="20" cy="22" r="15" fill="#ffe6a8"/><path d="M8 14 L12 4 L17 12Z M32 14 L28 4 L23 12Z" fill="#ffd06b"/><circle cx="15" cy="21" r="2.2" fill="#222"/><circle cx="25" cy="21" r="2.2" fill="#222"/><path d="M16 27 q4 3 8 0" stroke="#222" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="11" cy="25" r="2.4" fill="#ffb3a7"/><circle cx="29" cy="25" r="2.4" fill="#ffb3a7"/></svg></div>
+  <div class="hbub"><b>小幫手${HELPER}：這題要做的事</b><div class="hgoal">${MX(g)}</div><div class="hio">要依序讀進：${q.in.join(' → ')}　｜　最後要說出：${q.out.join('、')}</div></div></div>`;}
+
 /* ===================== 競賽對照：宜蘭縣資訊科技創意實作競賽平台 ===================== */
 const ICT_URL='https://ilanictexam.pages.dev/';
 const ICT={
@@ -1087,7 +1167,7 @@ function questReady(n,q){
   return n.quests.slice(0,k).every(x=>S.quests[x.id]);
 }
 function renderRegion(){
-  const n=NODES[cur.i];let h=`<h2>${n.name}</h2><p class="sub">突破條件：斬除心魔、取回玉簡，踏入${n.realm}</p>`;
+  const n=NODES[cur.i];let h=`<h2>${n.name}</h2><p class="sub">過關條件：做完任務、打倒最後的魔王關，就能升到「${n.realm}」</p>`;
   if(cur.view==='dialog'){
     h+=`<div class="dialog"><div class="speaker">${n.npc}</div><div>${n.lines[cur.dlg]}</div></div>
       <div class="row"><button class="btn" data-act="dlgNext">${cur.dlg<n.lines.length-1?'下一句':'接下委託'}</button><button class="btn ghost" data-act="dlgSkip">跳過對話</button></div>`;
@@ -1106,7 +1186,7 @@ function renderRegion(){
     }else{
       h+=`<h3>修行任務</h3>`;
       n.quests.forEach(q=>{const done=S.quests[q.id],ready=questReady(n,q);
-        h+=`<div class="quest ${done?'done':''} ${!ready&&!done?'locked':''}"><div class="info"><span class="tag ${q.type}">${TYPE_NAME[q.type]}</span><span class="name">${q.title}</span>${done?' <span style="color:var(--ok)">✓ 完成</span>':''}<div class="sub" style="margin:2px 0 0">${MX(q.desc)}</div></div>
+        h+=`<div class="quest ${done?'done':''} ${!ready&&!done?'locked':''}"><div class="info"><span class="tag ${q.type}">${TYPE_NAME[q.type]}</span><span class="name">${q.title}</span>${done?' <span style="color:var(--ok)">✓ 完成</span>':''}<div class="sub" style="margin:2px 0 0">${MX(GOAL[q.id]||q.desc)}</div></div>
         <button class="btn small" data-act="trial" data-q="${q.id}" ${ready?'':'disabled'}>${done?'再練一次':'開始試煉'}</button></div>`;});
       h+=`<p class="sub">這一區是同一個法器一路往下做：任務要依序完成，每一題都接著上一題的積木往下改；斬除心魔後會出現奇遇加碼。修煉室會自動保留你的積木和變數。</p>`;
       const boss=n.quests.find(q=>q.type==='boss');
@@ -1170,10 +1250,11 @@ async function renderSnips(root){
 }
 function guideHTML(q,withHead){
   const G=GUIDE[q.id],opened=!!S.hints[q.id];let h='';
+  h+=helperHTML(q);
   if(withHead)h+=`<div class="spec">${MX(q.desc)}</div><div class="example"><b>範例：</b>${MX(G.ex)}</div>`;
   const qi=NODES.findIndex(n=>n.quests&&n.quests.includes(q)),qk=qi>=0?NODES[qi].quests.indexOf(q):0;
   if(qk>0)h+=`<div class="msg info" style="margin-top:10px">接著上一題往下做：修煉室已保留你之前的積木和變數，只要照下面的步驟修改、加上新的部分。</div>`;
-  h+=`<p class="sub" style="margin-top:10px">照著步驟拼積木，卡住時點「小提示」。</p><ol class="steps">`;
+  h+=`<p class="sub" style="margin-top:10px">照下面的步驟拼積木，卡住就點「小提示」。</p><ol class="steps">`;
   G.steps.filter(st=>!st.only||st.only===MODE).forEach(st=>{h+=`<li><div>${MX(st.t)}</div>${st.b?sbBox(st.b):''}${st.tip?`<details class="tip"><summary>小提示</summary><div>${MX(st.tip)}</div></details>`:''}</li>`;});
   h+=`</ol><h3>師尊錦囊：完整參考程式</h3>`;
   if(opened)h+=`<p class="sub">先自己拼拼看，再對照這份參考程式。寫法不一定要完全一樣，試煉通過就可以。</p>${sbBox(G.answer)}`;
@@ -1296,18 +1377,27 @@ function showScrolls(){cur=null;
   showPanel(h);
 }
 function showHelp(){cur=null;
-  showPanel(`<h2>修行指南</h2>
+  showPanel(`<h2>遊戲說明</h2>
+  ${helperSay('我是小幫手小算！這個遊戲就是：<b>用積木寫程式，幫地圖上的人解決問題</b>。每解決一區，你就升一級。')}
+  <h3>一區怎麼玩？</h3>
   <ol>
-  <li>在地圖上點「坊市」前往，聽 NPC 說明委託。</li>
-  <li>先填「委託符」：輸入、處理、輸出各寫一句。</li>
-  <li>按「開始試煉」進入修煉室：左邊是步驟與小提示，中間的積木和宜蘭縣資訊科技創意實作競賽平台一模一樣，也一樣可以在上方切換「Scratch」或「Blockly」模式。</li>
-  <li>在右邊「自行測試」輸入資料（用空白隔開），按「▶ 執行」看輸出。</li>
-  <li>覺得對了就按「⚔ 自動試煉」，網站會自動出題檢查，全對就破陣。同一區的積木會自動保存。</li>
-  <li>主線 → 支線 → 斬心魔。心魔最愛邊界值和奇怪的輸入，記得自己先測。</li>
-  <li>斬完心魔寫「修行心得」，按「確定」就直接突破境界。</li>
+  <li><b>點地圖上的地點</b>，聽那裡的人說他遇到什麼麻煩。</li>
+  <li><b>填任務單</b>：已經幫你寫好了，看一眼按「確定」就好。</li>
+  <li><b>按「開始寫」</b>，進入寫程式畫面：
+    <ul><li>左邊：小幫手告訴你這題要做什麼，下面有一步一步的做法和小提示。</li>
+    <li>中間：拼積木的地方，和比賽用的積木一模一樣。</li>
+    <li>右邊：自己輸入數字按「▶ 執行」試試看；覺得對了，按「自動檢查」。</li></ul></li>
+  <li><b>全部答對就過關</b>，接著做下一題。同一區的題目會接著上一題改，積木會自動保存。</li>
+  <li><b>最後一題是魔王關</b>：會故意輸入奇怪的數字（0、負數、不合理的值），要先想好怎麼處理。</li>
+  <li><b>打完魔王關，寫學習心得</b>（也幫你寫好了），按「確定」就升級，可以去下一區。</li>
   </ol>
-  <p class="sub">境界：${THEME.realms.join(' → ')}。第七區是宗門大比（對應縣賽），全部九區都已開放。</p>
-  <p class="sub">小提示和師尊錦囊都免費。真的卡住，在修煉室按「⚡ 快速解答」，參考答案會直接放進積木區，按「⚔ 自動試煉」就能過關，再回頭看每個積木在做什麼。</p>`);
+  <h3>卡住怎麼辦？</h3>
+  <ul><li>先點「小提示」看提示。</li><li>還是不會，按上方的「<b>⚡ 快速解答</b>」，答案積木會直接排好，按「自動檢查」就能過關，再回頭看看每個積木在做什麼。</li></ul>
+  <h3>其他</h3>
+  <ul><li>題目種類：<b>主題</b>（新觀念）→ <b>練習</b> → <b>魔王關</b> → <b>加分題</b>（可以不做）。</li>
+  <li>過關後可以玩小遊戲「御劍斬魔」放鬆一下。</li>
+  <li>電腦教室關機會清掉進度，下課前記得按上方的「<b>存檔</b>」。</li>
+  <li>等級：${THEME.realms.join(' → ')}。第七區像縣賽的模擬考。</li></ul>`);
 }
 function showElder(){cur=null;
   showPanel(`<h2>長老專區</h2><p class="sub">學生斬完心魔、寫好修行心得後，會自動突破境界，不需要老師給印記。想檢查學生的進度，可以請學生打開「存檔」或看他的心得。</p>
@@ -1317,9 +1407,9 @@ function showElder(){cur=null;
 const ENT=s=>[...String(s)].map(c=>'&#'+c.codePointAt(0)+';').join('');
 function worldCards(){return `<div class="worlds">${Object.values(THEMES).map(t=>`<button type="button" class="world ${t.id===THEME_ID?'on':''}" data-act="world" data-world="${t.id}"><b>${ENT(t.title)}</b><span>${ENT(t.label)}</span><small>${ENT(t.tag)}</small>${t.id===THEME_ID?'<em>目前所在</em>':''}</button>`).join('')}</div>`;}
 function askName(){cur=null;
-  showPanel(`<h2>拜入算衍宗</h2><p class="sub">修仙界的大道叫「算道」：萬物運行皆有定數，能推演定數者方能飛升。你將以積木程式為推演法器，下山歷練、斬除心魔，從凡人一路修到渡劫。</p>
-  <h3>選擇你的世界</h3>${worldCards()}<p class="sub">題目和積木都一樣，只有故事和畫面不同；之後隨時可以按上方的「換世界」切換，進度不會消失。</p>
-  <form data-form="name"><div class="field"><label>你的道號（名字或暱稱）</label><input type="text" name="name" maxlength="20" required autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"></div>
+  showPanel(`<h2>歡迎來到算衍修仙錄</h2>${helperSay('嗨！我是小幫手小算。在這裡，你要<b>用積木寫程式</b>，幫地圖上的人算帳、收費、存錢……每幫完一區就升一級，從「'+THEME.realms[0]+'」一路升到最高的「'+RL(9)+'」。卡住的時候我會給你提示！')}
+  <h3>選一個你喜歡的故事</h3>${worldCards()}<p class="sub">兩個故事的題目一樣，只是角色和畫面不同。之後可以按上方「換世界」切換，進度不會不見。</p>
+  <form data-form="name"><div class="field"><label>你的名字（或暱稱）</label><input type="text" name="name" maxlength="20" required autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"></div>
   <button class="btn" type="submit">拜入山門</button></form>
   <p class="sub" style="margin-top:14px">之前上課存過檔？<button type="button" class="btn ghost small" data-act="savep2">讀取存檔</button></p>`);
 }
