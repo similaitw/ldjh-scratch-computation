@@ -1316,7 +1316,7 @@ function breakthrough(i){
   if(S.cleared.length>=3)addTitle('三境貫通');
   save();closePanel();
   document.getElementById('burstBig').textContent=TX('突破！'+n.realm);
-  document.getElementById('burstSmall').textContent=TX('取回「'+n.name+'玉簡」，習得'+n.scroll.title+(NODES[i+1]&&NODES[i+1].impl?'，前往「'+NODES[i+1].name+'」吧。':'。')+(({1:'判斷館',2:'迴圈館',4:'清單館',5:'字串館'})[i+1]?'百煉閣的「'+({1:'判斷館',2:'迴圈館',4:'清單館',5:'字串館'})[i+1]+'」也開放了！':''));
+  document.getElementById('burstSmall').textContent=TX('取回「'+n.name+'玉簡」，習得'+n.scroll.title+(NODES[i+1]&&NODES[i+1].impl?'，前往「'+NODES[i+1].name+'」吧。':'。'));
   document.getElementById('burst').classList.add('show');SFX('win');
 }
 document.getElementById('burstOk').onclick=()=>{document.getElementById('burst').classList.remove('show');updateHud();setTimeout(()=>toast('別忘了按上方的「存檔」下載存檔檔案，電腦教室關機會還原。'),600);};
@@ -1412,7 +1412,7 @@ function showHelp(){cur=null;
 }
 function showElder(){cur=null;
   showPanel(`<h2>長老專區</h2><p class="sub">學生斬完心魔、寫好修行心得後，會自動突破境界，不需要老師給印記。想檢查學生的進度，可以請學生打開「存檔」或看他的心得。</p>
-  <h3>班級使用建議</h3><ul><li>一般班級：前三區（變數、條件、迴圈）每區做主線與前兩個支線即可，約 4–5 節。</li><li>培訓班：九區依序做完（含斬心魔），每區約 2–3 節；第七區「宗門大比」可以當作縣賽前的模擬。奇遇當作進階或回家練習。</li><li>上方的「🏯 百煉閣」是技巧道具室（題庫同 <a href="https://ldjh-blockly-skills.vercel.app/" target="_blank" rel="noopener">Blockly 競賽技巧道場</a>）：四館二十招、60 題，不影響突破境界，適合先做完的學生或回家練習。每題第一次過關送 1 張遊戲券，練成一招再送 2 張並得到法寶；一館五招全成，小遊戲會多一種加持。四館跟著仙島開放。</li><li>小遊戲「御劍斬魔」要用遊戲券：每區寫完任務單送 3 張，每一題第一次過關再送 1 張，一局用 1 張。整個遊戲最多約 82 局。</li><li>卡關的學生可以按「🧩 給我積木零件」：需要的積木都會給，但被拆開打亂，要自己組合。同一題自動檢查沒過 3 次後，才能看完整答案。</li><li>每區結束後，請學生到<a href="https://ilanictexam.pages.dev/" target="_blank" rel="noopener">比賽平台</a>做「競賽對照」裡的同類題，熟悉評分方式。</li></ul>
+  <h3>班級使用建議</h3><ul><li>一般班級：前三區（變數、條件、迴圈）每區做主線與前兩個支線即可，約 4–5 節。</li><li>培訓班：九區依序做完（含斬心魔），每區約 2–3 節；第七區「宗門大比」可以當作縣賽前的模擬。奇遇當作進階或回家練習。</li><li>上方的「🏯 百煉閣」是技巧道具室（題庫同 <a href="https://ldjh-blockly-skills.vercel.app/" target="_blank" rel="noopener">Blockly 競賽技巧道場</a>）：四館二十招、60 題，不影響突破境界，適合先做完的學生或回家練習。每題第一次過關送 1 張遊戲券，練成一招再送 2 張並得到法寶；一館五招全成，小遊戲會多一種加持。四館隨時都能進，不用先過仙島。</li><li>小遊戲「御劍斬魔」要用遊戲券：每區寫完任務單送 3 張，每一題第一次過關再送 1 張，一局用 1 張。整個遊戲最多約 82 局。</li><li>卡關的學生可以按「🧩 給我積木零件」：需要的積木都會給，但被拆開打亂，要自己組合。同一題自動檢查沒過 3 次後，才能看完整答案。</li><li>每區結束後，請學生到<a href="https://ilanictexam.pages.dev/" target="_blank" rel="noopener">比賽平台</a>做「競賽對照」裡的同類題，熟悉評分方式。</li></ul>
   <p class="sub" style="margin-top:12px">巡堂時可以看：程式能處理邊界值、變數名稱清楚、心得三欄都有寫。</p>`);
 }
 const ENT=s=>[...String(s)].map(c=>'&#'+c.codePointAt(0)+';').join('');
@@ -1505,7 +1505,7 @@ let DJ_LIB=null,DJ_SK=null;
 function dojoLib(){if(!DJ_LIB)DJ_LIB=loadScript('lib/skills.js'+LIBV);DJ_LIB.catch(()=>{DJ_LIB=null;});return DJ_LIB;}
 const djDone=p=>!!(S.dojo&&S.dojo[p.id]);
 const djSkDone=sk=>sk.probs.every(djDone);
-const djHallOpen=hid=>unlocked(DOJO_HALL[hid].node);
+const djHallOpen=hid=>true;/* 百煉閣隨時都能進，不用先過仙島 */
 const djHallDone=h=>h.skills.every(djSkDone);
 const djItem=id=>{const it=DOJO_ITEM[id]||['✨',id,id];return{icon:it[0],name:THEME_ID==='magic'?it[2]:it[1]};};
 const djFind=id=>{for(const h of SKILLS.HALLS)for(const sk of h.skills){if(sk.id===id)return{h,sk};const p=sk.probs.find(x=>x.id===id);if(p)return{h,sk,p};}return{};};
@@ -1545,7 +1545,7 @@ async function showDojo(){cur=null;DJ_SK=null;
   const nItems=SKILLS.HALLS.reduce((a,h)=>a+h.skills.filter(djSkDone).length,0);
   let h=`<h2>🏯 百煉閣</h2><p class="sub">技巧道具室：比賽最常用的二十招，一招三題，練成一招就鍛出一件法寶。這裡不影響突破境界，是額外累積實力、賺遊戲券的地方。</p>
   <div class="spec">每題第一次過關：修為 +${DJ_XP}、靈石 +${DJ_GOLD}、遊戲券 +1 🎟<br>三題全過＝練成一招：法寶一件、道基 +1、遊戲券再 +2 🎟<br>一館五招全成：館主稱號，御劍斬魔多一種加持<br>
-  <span class="sub">每一館跟著仙島開放：判斷館（傳送驛站）、迴圈館（靈田谷）、清單館（演武場）、字串館（靈舟渡口）。</span></div>
+  <span class="sub">四館隨時都能進，不用先過仙島；想先練哪一館都可以，練起來的功力帶回主線一樣用得到。</span></div>
   <p>法寶囊：<b>${nItems}</b> / 20　｜　🎟 遊戲券 <b>${S.miniTickets||0}</b> 張</p>`;
   SKILLS.HALLS.forEach(hl=>{const H=DOJO_HALL[hl.id],open=djHallOpen(hl.id),done=hl.skills.filter(djSkDone).length;
     h+=`<h3>${hl.icon} ${hl.name}<span class="sub" style="font-family:inherit;letter-spacing:0">　${hl.sub}　${done}/5 招${djHallDone(hl)?'　✓ '+H.title:''}</span></h3>`;
