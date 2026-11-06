@@ -75,6 +75,7 @@ footer a{color:var(--mute)}
 .quest.locked{opacity:.5}
 .tag{display:inline-block;font-size:.75rem;padding:0 6px;margin-right:6px;border:1px solid currentColor;border-radius:3px}
 .tag.main{color:var(--gold)} .tag.side{color:#9cc4ff} .tag.extra{color:#e7a8f2} .tag.boss{color:var(--bad)} .tag.dojo{color:#7fe0bf}
+.djsay{margin:0;padding-left:1.1em} .djsay ul{margin:2px 0;padding-left:1.1em}
 .djgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px;margin:6px 0 4px}
 .djcard{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;background:var(--panel2);border:1px solid rgba(168,178,180,.25);border-radius:6px;color:inherit;font:inherit;cursor:pointer}
 .djcard:hover{border-color:var(--gold)} .djcard.ok{border-color:var(--ok);box-shadow:0 0 10px rgba(127,224,191,.25)}
@@ -1259,9 +1260,10 @@ function guideHTML(q,withHead){
   if(withHead)h+=`<div class="spec">${MX(q.desc)}</div><div class="example"><b>範例：</b>${MX(G.ex)}</div>`;
   const qi=NODES.findIndex(n=>n.quests&&n.quests.includes(q)),qk=qi>=0?NODES[qi].quests.indexOf(q):0;
   if(qk>0)h+=`<div class="msg info" style="margin-top:10px">接著上一題往下做：修煉室已保留你之前的積木和變數，只要照下面的步驟修改、加上新的部分。</div>`;
-  h+=`<p class="sub" style="margin-top:10px">照下面的步驟拼積木，卡住就點「小提示」。</p><ol class="steps">`;
+  if(G.pre)h+=G.pre;
+  h+=`<p class="sub" style="margin-top:10px">照下面的步驟拼積木${G.pre?'，每一步的積木圖就是要拼出來的樣子':'，卡住就點「小提示」'}。</p><ol class="steps">`;
   G.steps.filter(st=>!st.only||st.only===MODE).forEach(st=>{h+=`<li><div>${MX(st.t)}</div>${st.b?sbBox(st.b):''}${st.tip?`<details class="tip"><summary>小提示</summary><div>${MX(st.tip)}</div></details>`:''}</li>`;});
-  h+=`</ol>`;
+  h+=`</ol>`+(G.post||'');
   if(withHead)h+=`<h3>卡住了？先拿積木零件</h3><p class="sub">按下去，這題需要的積木會全部放進積木區，但是<b>被拆開、打亂了</b>。你要自己想：哪個先、哪個後、哪些要放進「如果」「重複」的開口裡。（原本排的積木會被換掉）</p><button type="button" class="btn quick" data-fg="quick">🧩 給我積木零件</button>`;
   const tries=(S.tries&&S.tries[q.id])||0,need=Math.max(0,ANS_TRIES-tries);
   h+=`<h3>師尊錦囊：完整參考程式</h3>`;
@@ -1524,11 +1526,49 @@ function dojoQ(sk,p){
   const ex=p.fixed[0].map(String);
   GOAL[p.id]=p.d;
   GUIDE[p.id]={ex:`輸入 <code>${esc(ex.join(' '))}</code> → 說出 <code>${esc(sol(ex))}</code>`,answer:p.ans,
-    steps:[{t:`這題練的是「<b>${sk.name}</b>」：${sk.motto}。先照骨架拼出來：`,b:sk.frame},
-      {t:p.hint,tip:sk.tip},
-      {t:'常見錯誤，寫完對照一下：<ul>'+sk.pitfalls.map(x=>`<li>${x}</li>`).join('')+'</ul>'}]};
+    pre:`<div class="msg info" style="margin-top:10px">這題練「<b>${sk.name}</b>」（${sk.motto}）。想法：${p.hint}</div>`,
+    post:`<details class="tip"><summary>常見錯誤，寫完對照一下</summary><ul>${sk.pitfalls.map(x=>`<li>${x}</li>`).join('')}</ul><p>比賽提醒：${sk.tip}</p></details>`,
+    steps:djSteps(p.ans)};
   return{n:{id:'dojo-'+p.id,name:'百煉閣・'+sk.name,dojo:true},q};
 }
+/* 從參考積木自動產生「一步一步做」：每一步是答案裡的一段積木，加上白話說明 */
+const djQ=x=>`<b>${esc(String(x).replace(/(讀取數字|讀取文字|空清單)\(\)/g,'「$1」'))}</b>`;
+function djSay(t){let m;
+  if(m=t.match(/^將 (\S+) 設為 讀取數字\(\)$/))return`讀進一個數字，存到 ${djQ(m[1])}`;
+  if(m=t.match(/^將 (\S+) 設為 讀取文字\(\)$/))return`讀進一段文字，存到 ${djQ(m[1])}`;
+  if(m=t.match(/^將 (\S+) 設為 空清單\(\)$/))return`準備一個空的清單 ${djQ(m[1])}`;
+  if(m=t.match(/^將 (\S+) 設為 重複清單\((.+), (\S+)\)$/))return`準備清單 ${djQ(m[1])}：${esc(m[3])} 格，每格都是 ${esc(m[2])}`;
+  if(m=t.match(/^將 (\S+) 設為 (-?\d+(?:\.\d+)?|真|假|「.*」)$/))return`${djQ(m[1])} 先設成 ${esc(m[2])}`;
+  if(m=t.match(/^將 (\S+) 設為 (.+)$/))return`把 ${djQ(m[1])} 設成 ${djQ(m[2])}`;
+  if(m=t.match(/^將 (\S+) 的值加 (.+)$/))return`${djQ(m[1])} 加上 ${djQ(m[2])}`;
+  if(m=t.match(/^清單 (\S+) 加入 (.+)$/))return`把 ${djQ(m[2])} 加到清單 ${djQ(m[1])} 的最後`;
+  if(m=t.match(/^清單 (\S+) 第 (\S+) 項設為 (.+)$/))return`清單 ${djQ(m[1])} 的第 ${esc(m[2])} 項改成 ${djQ(m[3])}`;
+  if(m=t.match(/^至 (\S+) 套用文字 (.+)$/))return`在 ${djQ(m[1])} 後面接上 ${djQ(m[2])}`;
+  if(m=t.match(/^說出 (.+)$/))return`說出 ${djQ(m[1])}`;
+  if(m=t.match(/^重複 (.+) 次$/))return`重複 ${djQ(m[1])} 次`;
+  if(m=t.match(/^循環計數 (\S+) 從 (.+) 到 (.+) 每次增加 (.+)$/))return`讓 ${djQ(m[1])} 從 ${djQ(m[2])} 數到 ${djQ(m[3])}（每次加 ${esc(m[4])}），每一圈`;
+  if(m=t.match(/^重複，當 (.+)$/))return`只要 ${djQ(m[1])} 成立就一直重複`;
+  if(m=t.match(/^為列表 (.+) 裡的每一項 (\S+)$/))return`把清單 ${djQ(m[1])} 的每一項輪流放進 ${djQ(m[2])}，每一項`;
+  if(m=t.match(/^否則，如果 (.+)$/))return`否則，如果 ${djQ(m[1])}`;
+  if(m=t.match(/^如果 (.+)$/))return`如果 ${djQ(m[1])}`;
+  if(t==='否則')return'否則';
+  if(t==='中斷循環')return'跳出迴圈（不用再找了）';
+  return esc(t);}
+/* 把一段縮排的積木文字變成巢狀說明 */
+function djTree(lines){const out=[];let i=0;
+  while(i<lines.length){const t=lines[i].trim(),ind=lines[i].search(/\S/);let j=i+1;
+    while(j<lines.length&&lines[j].search(/\S/)>ind)j++;
+    const kids=lines.slice(i+1,j);out.push(`<li>${djSay(t)}${kids.length?'：<ul>'+djTree(kids)+'</ul>':''}</li>`);i=j;}
+  return out.join('');}
+function djSteps(ans){
+  const L=ans.split('\n'),body=L[0].trim()==='當綠旗被點擊'?L.slice(1).map(l=>l.replace(/^  /,'')):L;
+  const tops=[];body.forEach(l=>{if(!l.trim())return;if(/^\S/.test(l)&&!/^否則/.test(l))tops.push([l]);else tops[tops.length-1].push(l);});
+  const isBlock=g=>g.length>1;const groups=[];
+  tops.forEach(g=>{const last=groups[groups.length-1];if(!isBlock(g)&&last&&!last.block&&!/^說出/.test(g[0]))last.lines.push(...g);else groups.push({block:isBlock(g),lines:g.slice()});});
+  const steps=[{t:'拉出「當綠旗被點擊」，下面的積木都接在它的開口裡。',b:'當綠旗被點擊',only:'Scratch'}];
+  groups.forEach(g=>{const say=/^說出/.test(g.lines[0])&&g.lines.length===1;
+    steps.push({t:(say?'最後，':'')+'<ul class="djsay">'+djTree(g.lines)+'</ul>',b:g.lines.join('\n')});});
+  return steps;}
 /* 第一次過關的獎勵；回傳要顯示的文字 */
 function dojoComplete(sk,p){
   if(!S.dojo)S.dojo={};if(S.dojo[p.id])return'（已熟練）';
