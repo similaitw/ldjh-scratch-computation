@@ -1264,7 +1264,7 @@ function guideHTML(q,withHead){
   h+=`<p class="sub" style="margin-top:10px">照下面的步驟拼積木${G.pre?'，每一步的積木圖就是要拼出來的樣子':'，卡住就點「小提示」'}。</p><ol class="steps">`;
   G.steps.filter(st=>!st.only||st.only===MODE).forEach(st=>{h+=`<li><div>${MX(st.t)}</div>${st.b?sbBox(st.b):''}${st.tip?`<details class="tip"><summary>小提示</summary><div>${MX(st.tip)}</div></details>`:''}</li>`;});
   h+=`</ol>`+(G.post||'');
-  if(withHead)h+=`<h3>卡住了？先拿積木零件</h3><p class="sub">按下去，這題需要的積木會全部放進積木區，但是<b>被拆開、打亂了</b>。你要自己想：哪個先、哪個後、哪些要放進「如果」「重複」的開口裡。（原本排的積木會被換掉）</p><button type="button" class="btn quick" data-fg="quick">🧩 給我積木零件</button>`;
+  if(withHead)h+=`<h3>卡住了？先拿積木零件</h3><p class="sub">按下去，<b>上一題的積木會幫你接好</b>，這一題<b>新加的積木</b>會拆開、打亂放在右邊。你要自己想：新的積木要接在哪裡、哪些要放進「如果」「重複」的開口裡。（積木區會換成參考答案的版本）</p><button type="button" class="btn quick" data-fg="quick">🧩 給我積木零件</button>`;
   const tries=(S.tries&&S.tries[q.id])||0,need=Math.max(0,ANS_TRIES-tries);
   h+=`<h3>師尊錦囊：完整參考程式</h3>`;
   if(opened)h+=`<p class="sub">對照看看你的積木哪裡不一樣。寫法不一定要完全一樣，自動檢查通過就可以。</p>${sbBox(G.answer)}`;
@@ -1405,7 +1405,7 @@ function showHelp(){cur=null;
   <li><b>打完魔王關，寫學習心得</b>（也幫你寫好了），按「確定」就升級，可以去下一區。</li>
   </ol>
   <h3>卡住怎麼辦？</h3>
-  <ul><li>先點「小提示」看提示。</li><li>還是不會，按上方的「<b>🧩 給我積木零件</b>」：要用的積木會全部拿出來，但被拆開打亂了，你只要把它們接對位置。</li><li>同一題按「自動檢查」沒過 3 次以後，就可以打開「完整答案」對照。</li></ul>
+  <ul><li>先點「小提示」看提示。</li><li>還是不會，按上方的「<b>🧩 給我積木零件</b>」：上一題的積木會幫你接好，這一題新加的積木會拆開打亂放在旁邊，你只要把它們接對位置。</li><li>同一題按「自動檢查」沒過 3 次以後，就可以打開「完整答案」對照。</li></ul>
   <h3>其他</h3>
   <ul><li><b>🏯 百煉閣</b>（上方按鈕）：比賽常用的二十招，一招三題。練成一招得到一件法寶，還送遊戲券；不做也能升級，是額外變強的地方。</li><li>題目種類：<b>主題</b>（新觀念）→ <b>練習</b> → <b>魔王關</b> → <b>加分題</b>（可以不做）。</li>
   <li>小遊戲「御劍斬魔」要用遊戲券：每到一個新區域、寫完任務單就送 3 張；之後每過一題新的再送 1 張（同一題重做不會再送）。一局用 1 張。</li>
@@ -1414,7 +1414,7 @@ function showHelp(){cur=null;
 }
 function showElder(){cur=null;
   showPanel(`<h2>長老專區</h2><p class="sub">學生斬完心魔、寫好修行心得後，會自動突破境界，不需要老師給印記。想檢查學生的進度，可以請學生打開「存檔」或看他的心得。</p>
-  <h3>班級使用建議</h3><ul><li>一般班級：前三區（變數、條件、迴圈）每區做主線與前兩個支線即可，約 4–5 節。</li><li>培訓班：九區依序做完（含斬心魔），每區約 2–3 節；第七區「宗門大比」可以當作縣賽前的模擬。奇遇當作進階或回家練習。</li><li>上方的「🏯 百煉閣」是技巧道具室（題庫同 <a href="https://ldjh-blockly-skills.vercel.app/" target="_blank" rel="noopener">Blockly 競賽技巧道場</a>）：四館二十招、60 題，不影響突破境界，適合先做完的學生或回家練習。每題第一次過關送 1 張遊戲券，練成一招再送 2 張並得到法寶；一館五招全成，小遊戲會多一種加持。四館隨時都能進，不用先過仙島。</li><li>小遊戲「御劍斬魔」要用遊戲券：每區寫完任務單送 3 張，每一題第一次過關再送 1 張，一局用 1 張。整個遊戲最多約 82 局。</li><li>卡關的學生可以按「🧩 給我積木零件」：需要的積木都會給，但被拆開打亂，要自己組合。同一題自動檢查沒過 3 次後，才能看完整答案。</li><li>每區結束後，請學生到<a href="https://ilanictexam.pages.dev/" target="_blank" rel="noopener">比賽平台</a>做「競賽對照」裡的同類題，熟悉評分方式。</li></ul>
+  <h3>班級使用建議</h3><ul><li>一般班級：前三區（變數、條件、迴圈）每區做主線與前兩個支線即可，約 4–5 節。</li><li>培訓班：九區依序做完（含斬心魔），每區約 2–3 節；第七區「宗門大比」可以當作縣賽前的模擬。奇遇當作進階或回家練習。</li><li>上方的「🏯 百煉閣」是技巧道具室（題庫同 <a href="https://ldjh-blockly-skills.vercel.app/" target="_blank" rel="noopener">Blockly 競賽技巧道場</a>）：四館二十招、60 題，不影響突破境界，適合先做完的學生或回家練習。每題第一次過關送 1 張遊戲券，練成一招再送 2 張並得到法寶；一館五招全成，小遊戲會多一種加持。四館隨時都能進，不用先過仙島。</li><li>小遊戲「御劍斬魔」要用遊戲券：每區寫完任務單送 3 張，每一題第一次過關再送 1 張，一局用 1 張。整個遊戲最多約 82 局。</li><li>卡關的學生可以按「🧩 給我積木零件」：上一題的積木保持接好，只有這一題新加的積木被拆開打亂，要自己組合。同一題自動檢查沒過 3 次後，才能看完整答案。</li><li>每區結束後，請學生到<a href="https://ilanictexam.pages.dev/" target="_blank" rel="noopener">比賽平台</a>做「競賽對照」裡的同類題，熟悉評分方式。</li></ul>
   <p class="sub" style="margin-top:12px">巡堂時可以看：程式能處理邊界值、變數名稱清楚、心得三欄都有寫。</p>`);
 }
 const ENT=s=>[...String(s)].map(c=>'&#'+c.codePointAt(0)+';').join('');
@@ -1612,28 +1612,41 @@ function dojoNext(){const q=FG.q;if(!q||!q.dojo)return;const k=q.sk.probs.indexO
   fgEl('forge').classList.add('hidden');if(window.Music)Music.duck(false);showDojo();}
 const ANS_TRIES=3;
 /* 積木零件：把參考答案的積木全部拆開、打亂，放進積木區，讓學生自己組合 */
+/* 積木的「指紋」：種類＋欄位文字＋接在裡面的數值積木，用來比對上一題有沒有同一塊 */
+function blockSig(b){const f=[];b.inputList.forEach(inp=>{inp.fieldRow.forEach(fd=>{if(fd.name)f.push(fd.getText());});
+  const c=inp.connection&&inp.connection.targetBlock();if(c&&!c.previousConnection)f.push('('+blockSig(c)+')');});return b.type+'|'+f.join('|');}
+function answerSigs(src){const cnt={};try{const hw=new Blockly.Workspace();Blockly.serialization.workspaces.load({blocks:{languageVersion:0,blocks:BDSL.parse(src)}},hw);
+  hw.getAllBlocks(false).filter(b=>b.previousConnection).forEach(b=>{const k=blockSig(b);cnt[k]=(cnt[k]||0)+1;});hw.dispose();}catch(e){console.error(e);}return cnt;}
+/* 積木零件：上一題已經有的積木保持接好，只把這一題新加的積木拆開、打亂，放在右邊讓學生自己組合 */
 function quickParts(){
   if(!window.Forge||!Forge.ready||!FG.q)return;const q=FG.q,G=GUIDE[q.id];if(!G||!G.answer)return;
   let tops;try{tops=BDSL.parse(G.answer);}catch(e){console.error(e);toast('積木載入失敗。');return;}
+  const qs=FG.n&&FG.n.quests?FG.n.quests:[],qi=qs.indexOf(q),prev=qi>0?GUIDE[qs[qi-1].id]:null;
+  const old=prev&&prev.answer?answerSigs(prev.answer):{};
   Forge.load(JSON.stringify({blocks:{languageVersion:0,blocks:tops}}));
+  let nNew=0,nOld=0;
   setTimeout(()=>{const ws=Forge.ws;Forge.loading=true;
     try{Blockly.Events.disable();
-      const stm=ws.getAllBlocks(true).filter(b=>b.previousConnection&&b.getParent());
-      stm.forEach(b=>{if(b.getParent())b.unplug(false);});
+      const stm=ws.getAllBlocks(true).filter(b=>b.previousConnection),fresh=[];
+      stm.forEach(b=>{const k=blockSig(b);if(old[k]>0){old[k]--;nOld++;}else fresh.push(b);});
+      nNew=fresh.length;
+      for(let k=fresh.length-1;k>=0;k--){const b=fresh[k];if(b.getParent())b.unplug(true);}
       try{Blockly.renderManagement.triggerQueuedRenders(ws);}catch(e){}
-      const hat=ws.getTopBlocks(false).find(b=>b.type==='event_whenflagclicked');
-      const pieces=ws.getTopBlocks(false).filter(b=>b!==hat);
+      const all=ws.getTopBlocks(false),freshSet=new Set(fresh);
+      const isPiece=t=>t.getDescendants(false).every(d=>!d.previousConnection||freshSet.has(d))&&t.type!=='event_whenflagclicked';
+      const main=all.filter(t=>!isPiece(t)),pieces=all.filter(isPiece);
       for(let i=pieces.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pieces[i],pieces[j]]=[pieces[j],pieces[i]];}
       const place=(b,x,y)=>{const p=b.getRelativeToSurfaceXY();b.moveBy(x-p.x,y-p.y);};
-      let y=20;if(hat){place(hat,20,y);y+=hat.getHeightWidth().height+34;}
-      pieces.forEach((b,k)=>{place(b,20+(k%3)*36,y);y+=b.getHeightWidth().height+20;});
+      let y=20,w=0;main.forEach(t=>{place(t,20,y);const hw=t.getHeightWidth();y+=hw.height+30;w=Math.max(w,hw.width);});
+      const px=main.length?20+w+70:20;y=20;
+      pieces.forEach((b,k)=>{place(b,px+(k%3)*30,y);y+=b.getHeightWidth().height+20;});
     }finally{Blockly.Events.enable();Forge.loading=false;}
-    Blockly.svgResize(ws);ws.zoomToFit();if(ws.scale<.6)ws.setScale(.6);if(ws.scale>.9)ws.setScale(.9);
+    Blockly.svgResize(ws);ws.zoomToFit();if(ws.scale<.55)ws.setScale(.55);if(ws.scale>.9)ws.setScale(.9);
     const bb=ws.getBlocksBoundingBox();ws.scroll(-bb.left*ws.scale+30,-bb.top*ws.scale+20);
     try{if(FG.region)localStorage.setItem(projKey(FG.region),Forge.json());}catch(e){}
+    toast(nOld?`上一題的積木已經接好了；這一題新加的 ${nNew} 塊放在右邊，被打散了，把它們接進去！`:'這題要用的積木都拿出來了，但被拆開打亂了！把它們接起來，再按「自動檢查」。');
   },60);
   fgEl('fgResult').innerHTML='';fgEl('fgOut').textContent='（還沒執行）';
-  toast('這題要用的積木都拿出來了，但被拆開打亂了！把它們接起來，再按「自動檢查」。');
 }
 /* 完整答案直接放進積木區（教師測試用，學生畫面沒有這個按鈕） */
 function quickAnswer(){
